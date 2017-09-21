@@ -1,0 +1,16 @@
+{
+  "name": "orbit-db-keystore",
+  "version": "0.0.1",
+  "description": "Keystore for orbit-db",
+  "main": "src/keystore.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Haad",
+  "license": "MIT",
+  "dependencies": {
+    "elliptic": "^6.4.0",
+    "mkdirp": "^0.5.1",
+    "node-localstorage": "^1.3.0"
+  }
+}
