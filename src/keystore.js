@@ -138,12 +138,7 @@ class Keystore {
 
   verify(signature, key, data) {
     let res = false
-    try {
-      res = ec.verify(data, signature, key)
-    } catch(e) {
-      console.log("Verification error:", e)
-    }
-
+    res = ec.verify(data, signature, key)
     return Promise.resolve(res)
   }
 }
