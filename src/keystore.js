@@ -4,6 +4,7 @@ const mkdirp = require('mkdirp')
 const EC = require('elliptic').ec
 const ec = new EC('secp256k1')
 // const LRU = require('lru')
+const crypto = require('libp2p-crypto').keys
 
 // let keystore
 // const cache = new LRU(100)
@@ -27,28 +28,57 @@ class Keystore {
     // this._cache = new LRU(100)
   }
 
-  createKey(id) {
-    const key = ec.genKeyPair()
-    const publicKey = key.getPublic('hex')
-    const privateKey = key.getPrivate('hex')
-    this._storage.setItem(id, JSON.stringify({ publicKey: publicKey, privateKey: privateKey }))
-    return key
+  async createKey(id) {
+    return new Promise((resolve, reject) => {
+      // console.log(crypto)
+      crypto.generateKeyPair('RSA', 1024, (err, key) => {
+        // console.log("PUB :", err, key.public.bytes.toString('hex'))
+        // console.log("PRIV:", err, key.bytes.toString('hex'))
+        // crypto.marshalPublicKey(key, 'ed25519', (err, bytes) => {
+        //   console.log("KEYS:", err, bytes)
+        // })
+
+        const bytes = Buffer.from(key.public.bytes.toString('hex'), 'hex')
+        // console.log(crypto.keysPBM.PublicKey.decode(bytes))
+        const pubKey = crypto.unmarshalPublicKey(bytes)
+          // console.log("PUB2:", err, pubKey.bytes.toString('hex'))
+          // console.log("PRIV:", err, key.bytes.toString('hex'))
+          
+          const keyPair = {
+            getPublic: (encoding) => pubKey.bytes.toString(encoding),
+            publicKey: pubKey,
+            privateKey: key,
+          }
+          
+          this._storage.setItem(id, key.bytes.toString('hex'))
+          resolve(keyPair)
+        // })
+      })
+      // const key = ec.genKeyPair()
+      // const publicKey = key.getPublic('hex')
+      // const privateKey = key.getPrivate('hex')
+      // this._storage.setItem(id, JSON.stringify({ publicKey: publicKey, privateKey: privateKey }))
+    })
   }
 
   getKey(id) {
-    let key = JSON.parse(this._storage.getItem(id))
+    return new Promise((resolve, reject) => {
+      let key = this._storage.getItem(id)
 
-    if (!key)
-      return
+      if (!key)
+        resolve()
 
-    const k = ec.keyPair({ 
-      pub:  key.publicKey, 
-      priv: key.privateKey,
-      privEnc: 'hex',
-      pubEnc: 'hex',
+      const bytes = Buffer.from(key, 'hex')
+      crypto.unmarshalPrivateKey(bytes, (err, key) => {
+        const keyPair = {
+          getPublic: (encoding) => key.public.bytes.toString(encoding),
+          publicKey: key.public,
+          privateKey: key,
+        }
+        // console.log("GETKEY:", keyPair)
+        resolve(keyPair)
+      })
     })
-
-    return k
   }
 
   static importKeyFromIpfs(ipfs, hash) {
@@ -124,7 +154,21 @@ class Keystore {
   }
 
   importPublicKey(key) {
-    return Promise.resolve(ec.keyFromPublic(key, 'hex'))
+    return new Promise(resolve => {
+      const bytes = Buffer.from(key, 'hex')
+      const pubKey = crypto.unmarshalPublicKey(bytes)
+      // console.log("PUB2:", err, pubKey.bytes.toString('hex'))
+        // console.log("PRIV:", err, key.bytes.toString('hex'))
+        
+      const keyPair = {
+        getPublic: (encoding) => pubKey.bytes.toString(encoding),
+        publicKey: pubKey,
+        privateKey: null,
+      }
+
+      resolve(keyPair)
+    })
+    // return Promise.resolve(ec.keyFromPublic(key, 'hex'))
   }
 
   importPrivateKey(key) {
@@ -132,14 +176,24 @@ class Keystore {
   }
 
   sign(key, data) {
-    const sig = ec.sign(data, key)
-    return Promise.resolve(sig.toDER('hex'))
+    return new Promise(resolve => {
+      key.privateKey.sign(data, (err, sig) => {
+        resolve(sig)
+      })
+    })
+    // const sig = ec.sign(data, key)
+    // return Promise.resolve(sig.toDER('hex'))
   }
 
   verify(signature, key, data) {
-    let res = false
-    res = ec.verify(data, signature, key)
-    return Promise.resolve(res)
+    return new Promise(resolve => {
+      key.publicKey.verify(data, signature, (err, ok) => {
+        resolve(true)
+      })
+    })
+    // let res = false
+    // res = ec.verify(data, signature, key)
+    // return Promise.resolve(res)
   }
 }
 
