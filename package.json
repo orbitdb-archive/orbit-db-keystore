@@ -2,7 +2,8 @@
   "name": "orbit-db-keystore",
   "version": "0.0.2",
   "description": "Keystore for orbit-db",
-  "main": "src/keystore.js",
+  "main": "index-nodejs.js",
+  "browser": "index-browser.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
