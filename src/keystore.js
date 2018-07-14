@@ -2,11 +2,15 @@
 
 const EC = require('elliptic').ec
 const ec = new EC('secp256k1')
+const crypto = require('libp2p-crypto')
 
 class Keystore {
   constructor(storage) {
     this._storage = storage
   }
+  static get NumberPasswordIterations(){ return 1000 }
+  static get HashingAlgorithm(){ return 'sha2-512' }
+  static get IVLen() { return 16 }
 
   createKey(id) {
     const key = ec.genKeyPair()
@@ -64,6 +68,57 @@ class Keystore {
     let res = false
     res = ec.verify(data, signature, key)
     return Promise.resolve(res)
+  }
+
+  async exportKeystore(id, password) {
+    var data = Buffer.from(this._storage.getItem(id))
+    var res = {id:id, data: data}
+    //Need something better than JSON
+    if (password) {
+      const IV   = crypto.randomBytes(Keystore.IVLen)
+      const salt = crypto.randomBytes(8)
+      const hashedPass = this.hashPassword(password, salt)
+      await crypto.aes.create(hashedPass, IV, async (err, aes) => {
+        if (!err) {
+          aes.encrypt(data, (err, encBuf) => {
+              if (!err) {
+                res = {id: id, data: encBuf, IV: IV, salt: salt}
+              }
+            })
+        }
+      })   
+      return res
+    }
+    return res
+  }
+
+  async importKeystore(exportedKeystore, password) {
+    var data = exportedKeystore.data
+    const id = exportedKeystore.id
+    if (password) {
+      const IV  = exportedKeystore.IV
+      const salt = exportedKeystore.salt
+      const hashedPassword = this.hashPassword(password, salt)
+      await crypto.aes.create(hashedPassword, IV, async (err, aes) => {
+        if (!err) {
+          aes.decrypt(data, (err, decBuf) => {
+              if (!err) {
+                data = decBuf
+              }
+          })
+        }
+      }) 
+    }
+    this._storage.setItem(id, data.toString())
+    return this;
+  }
+
+  hashPassword(password, salt) {
+    return Buffer.from(crypto.pbkdf2(password, 
+                      salt, 
+                      Keystore.NumberPasswordIterations, 
+                      Keystore.IVLen - salt.length/2, 
+                      Keystore.HashingAlgorithm)) 
   }
 }
 
