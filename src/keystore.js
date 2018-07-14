@@ -70,7 +70,7 @@ class Keystore {
     return Promise.resolve(res)
   }
 
-  async exportKeystore(id, password) {
+  async exportKey(id, password) {
     var data = Buffer.from(this._storage.getItem(id))
     var res = {id:id, data: data}
     //Need something better than JSON
@@ -92,12 +92,12 @@ class Keystore {
     return res
   }
 
-  async importKeystore(exportedKeystore, password) {
-    var data = exportedKeystore.data
-    const id = exportedKeystore.id
+  async importKey(exportedKey, password) {
+    var data = exportedKey.data
+    const id = exportedKey.id
     if (password) {
-      const IV  = exportedKeystore.IV
-      const salt = exportedKeystore.salt
+      const IV  = exportedKey.IV
+      const salt = exportedKey.salt
       const hashedPassword = this.hashPassword(password, salt)
       await crypto.aes.create(hashedPassword, IV, async (err, aes) => {
         if (!err) {
