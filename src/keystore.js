@@ -10,9 +10,9 @@ class Keystore {
 
   hasKey (id) {
     let hasKey = false
+    let storedKey = this._storage.getItem(id)
     try {
-      hasKey = this._storage.getItem(id) !== undefined
-        && this._storage.getItem(id) !== null
+      hasKey = storedKey !== undefined && storedKey !== null
     } catch (e) {
       // Catches 'Error: ENOENT: no such file or directory, open <path>'
       console.error('Error: ENOENT: no such file or directory')
@@ -34,19 +34,24 @@ class Keystore {
   }
 
   getKey (id) {
-    let key = JSON.parse(this._storage.getItem(id))
+    const storedKey = this._storage.getItem(id)
 
-    if (!key)
+    if (!storedKey)
       return
 
-    const k = ec.keyPair({
-      pub:  key.publicKey,
-      priv: key.privateKey,
+    const deserializedKey = JSON.parse(storedKey)
+
+    if (!deserializedKey)
+      return
+
+    const key = ec.keyPair({
+      pub:  deserializedKey.publicKey,
+      priv: deserializedKey.privateKey,
       pubEnc: 'hex',
       privEnc: 'hex',
     })
 
-    return k
+    return key
   }
 
   sign(key, data) {
