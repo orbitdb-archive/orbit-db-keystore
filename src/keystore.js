@@ -10,9 +10,9 @@ class Keystore {
 
   hasKey (id) {
     let hasKey = false
+    let storedKey = this._storage.getItem(id)
     try {
-      hasKey = this._storage.getItem(id) !== undefined
-        && this._storage.getItem(id) !== null
+      hasKey = storedKey !== undefined && storedKey !== null
     } catch (e) {
       // Catches 'Error: ENOENT: no such file or directory, open <path>'
       console.error('Error: ENOENT: no such file or directory')
