@@ -34,19 +34,24 @@ class Keystore {
   }
 
   getKey (id) {
-    let key = JSON.parse(this._storage.getItem(id))
+    const storedKey = this._storage.getItem(id)
 
-    if (!key)
+    if (!storedKey)
       return
 
-    const k = ec.keyPair({
-      pub:  key.publicKey,
-      priv: key.privateKey,
+    const deserializedKey = JSON.parse(storedKey)
+
+    if (!deserializedKey)
+      return
+
+    const key = ec.keyPair({
+      pub:  deserializedKey.publicKey,
+      priv: deserializedKey.privateKey,
       pubEnc: 'hex',
       privEnc: 'hex',
     })
 
-    return k
+    return key
   }
 
   sign(key, data) {
