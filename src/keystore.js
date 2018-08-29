@@ -9,6 +9,7 @@ class Keystore {
   }
 
   hasKey (id) {
+    if (!id) throw new Error('id needed to check a key')
     let hasKey = false
     let storedKey = this._storage.getItem(id)
     try {
@@ -21,6 +22,8 @@ class Keystore {
   }
 
   createKey (id) {
+    if (!id) throw new Error('id needed to create a key')
+
     const keyPair = ec.genKeyPair()
 
     const key = {
@@ -34,6 +37,8 @@ class Keystore {
   }
 
   getKey (id) {
+    if (!id) throw new Error('id needed to get a key')
+
     const storedKey = this._storage.getItem(id)
 
     if (!storedKey)
@@ -55,11 +60,16 @@ class Keystore {
   }
 
   sign(key, data) {
+    if (!key) throw new Error('No signing key given')
+    if (!data) throw new Error('Given input data was undefined')
     const sig = ec.sign(data, key)
     return Promise.resolve(sig.toDER('hex'))
   }
 
   verify(signature, publicKey, data) {
+    if (!signature) throw new Error('No signature given')
+    if (!publicKey) throw new Error('Given publicKey was undefined')
+    if (!data) throw new Error('Given input data was undefined')
     let res = false
     const key = ec.keyPair({
       pub:  publicKey,
