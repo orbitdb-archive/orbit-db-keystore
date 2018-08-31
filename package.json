@@ -5,7 +5,9 @@
   "main": "index-nodejs.js",
   "browser": "index-browser.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run build:dist",
+    "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --define process.env.NODE_ENV=production"
   },
   "author": "Haad",
   "license": "MIT",
@@ -13,5 +15,9 @@
     "elliptic": "^6.4.0",
     "mkdirp": "^0.5.1",
     "node-localstorage": "^1.3.0"
+  },
+  "devDependencies": {
+    "uglifyjs-webpack-plugin": "~1.3.0",
+    "webpack": "^3.10.0"
   }
 }
