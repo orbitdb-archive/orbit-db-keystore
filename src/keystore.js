@@ -34,7 +34,7 @@ class Keystore {
     }
 
     this._storage.setItem(id, JSON.stringify(key))
-    this._cache.set(id, JSON.stringify(key))
+    this._cache.set(id, key)
 
     return keyPair
   }
@@ -47,13 +47,13 @@ class Keystore {
     if (!storedKey)
       return
 
-    if (!cachedKey)
-      this._cache.set(id, storedKey)
-
-    const deserializedKey = JSON.parse(storedKey)
+    const deserializedKey = cachedKey || JSON.parse(storedKey)
 
     if (!deserializedKey)
       return
+
+    if (!cachedKey)
+      this._cache.set(id, deserializedKey)
 
     const key = ec.keyPair({
       pub:  deserializedKey.publicKey,
