@@ -42,7 +42,12 @@ class Keystore {
   getKey (id) {
     if (!id) throw new Error('id needed to get a key')
     const cachedKey = this._cache.get(id)
-    const storedKey = cachedKey || this._storage.getItem(id)
+    let storedKey
+    try {
+      storedKey = cachedKey || this._storage.getItem(id)
+    } catch (e) {
+      // ignore ENOENT error
+    }
 
     if (!storedKey)
       return
