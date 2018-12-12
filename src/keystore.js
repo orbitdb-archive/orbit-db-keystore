@@ -66,6 +66,10 @@ class Keystore {
     return Promise.resolve(sig.toDER('hex'))
   }
 
+  verify(signature, publicKey, data) {
+    return Keystore.verify(signature, publicKey, data)
+  }
+
   static verify(signature, publicKey, data) {
     if (!signature) throw new Error('No signature given')
     if (!publicKey) throw new Error('Given publicKey was undefined')
