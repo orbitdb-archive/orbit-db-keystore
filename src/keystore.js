@@ -66,7 +66,7 @@ class Keystore {
     return Promise.resolve(sig.toDER('hex'))
   }
 
-  verify(signature, publicKey, data) {
+  static verify(signature, publicKey, data) {
     if (!signature) throw new Error('No signature given')
     if (!publicKey) throw new Error('Given publicKey was undefined')
     if (!data) throw new Error('Given input data was undefined')
@@ -96,6 +96,7 @@ module.exports = (LocalStorage, mkdir) => {
       // in the browser, we use the browser's localStorage
       const storage = LocalStorage ? new LocalStorage(directory) : localStorage
       return new Keystore(storage)
-    }
+    },
+    verify: Keystore.verify
   }
 }
