@@ -8,7 +8,7 @@ module.exports = {
   output: {
     libraryTarget: 'var',
     library: 'Keystore',
-    filename: 'index-browser.min.js'
+    filename: 'dist/index-browser.min.js'
   },
   target: 'web',
   devtool: 'sourcemap',

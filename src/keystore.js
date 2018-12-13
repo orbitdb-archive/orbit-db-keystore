@@ -2,16 +2,18 @@
 
 const EC = require('elliptic').ec
 const ec = new EC('secp256k1')
+const LRU = require('lru')
 
 class Keystore {
   constructor (storage) {
     this._storage = storage
+    this._cache = new LRU(100)
   }
 
   hasKey (id) {
     if (!id) throw new Error('id needed to check a key')
     let hasKey = false
-    let storedKey = this._storage.getItem(id)
+    let storedKey = this._cache.get(id) || this._storage.getItem(id)
     try {
       hasKey = storedKey !== undefined && storedKey !== null
     } catch (e) {
@@ -32,22 +34,31 @@ class Keystore {
     }
 
     this._storage.setItem(id, JSON.stringify(key))
+    this._cache.set(id, key)
 
     return keyPair
   }
 
   getKey (id) {
     if (!id) throw new Error('id needed to get a key')
-
-    const storedKey = this._storage.getItem(id)
+    const cachedKey = this._cache.get(id)
+    let storedKey
+    try {
+      storedKey = cachedKey || this._storage.getItem(id)
+    } catch (e) {
+      // ignore ENOENT error
+    }
 
     if (!storedKey)
       return
 
-    const deserializedKey = JSON.parse(storedKey)
+    const deserializedKey = cachedKey || JSON.parse(storedKey)
 
     if (!deserializedKey)
       return
+
+    if (!cachedKey)
+      this._cache.set(id, deserializedKey)
 
     const key = ec.keyPair({
       pub:  deserializedKey.publicKey,
