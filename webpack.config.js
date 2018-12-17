@@ -17,7 +17,7 @@ module.exports = {
     Buffer: true
   },
   plugins: [
-    new Uglify(),
+    new Uglify()
   ],
   resolve: {
     modules: [
@@ -31,5 +31,5 @@ module.exports = {
       path.resolve(__dirname, '../node_modules')
     ],
     moduleExtensions: ['-loader']
-  },
+  }
 }

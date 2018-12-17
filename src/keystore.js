@@ -1,3 +1,4 @@
+/* globals localStorage */
 'use strict'
 
 const EC = require('elliptic').ec
@@ -11,7 +12,9 @@ class Keystore {
   }
 
   hasKey (id) {
-    if (!id) throw new Error('id needed to check a key')
+    if (!id) {
+      throw new Error('id needed to check a key')
+    }
     let hasKey = false
     let storedKey = this._cache.get(id) || this._storage.getItem(id)
     try {
@@ -24,13 +27,15 @@ class Keystore {
   }
 
   createKey (id) {
-    if (!id) throw new Error('id needed to create a key')
+    if (!id) {
+      throw new Error('id needed to create a key')
+    }
 
     const keyPair = ec.genKeyPair()
 
     const key = {
       publicKey: keyPair.getPublic('hex'),
-      privateKey: keyPair.getPrivate('hex'),
+      privateKey: keyPair.getPrivate('hex')
     }
 
     this._storage.setItem(id, JSON.stringify(key))
@@ -40,7 +45,9 @@ class Keystore {
   }
 
   getKey (id) {
-    if (!id) throw new Error('id needed to get a key')
+    if (!id) {
+      throw new Error('id needed to get a key')
+    }
     const cachedKey = this._cache.get(id)
     let storedKey
     try {
@@ -49,46 +56,59 @@ class Keystore {
       // ignore ENOENT error
     }
 
-    if (!storedKey)
+    if (!storedKey) {
       return
+    }
 
     const deserializedKey = cachedKey || JSON.parse(storedKey)
 
-    if (!deserializedKey)
+    if (!deserializedKey) {
       return
+    }
 
-    if (!cachedKey)
+    if (!cachedKey) {
       this._cache.set(id, deserializedKey)
+    }
 
     const key = ec.keyPair({
-      pub:  deserializedKey.publicKey,
+      pub: deserializedKey.publicKey,
       priv: deserializedKey.privateKey,
       pubEnc: 'hex',
-      privEnc: 'hex',
+      privEnc: 'hex'
     })
 
     return key
   }
 
-  sign(key, data) {
-    if (!key) throw new Error('No signing key given')
-    if (!data) throw new Error('Given input data was undefined')
+  sign (key, data) {
+    if (!key) {
+      throw new Error('No signing key given')
+    }
+    if (!data) {
+      throw new Error('Given input data was undefined')
+    }
     const sig = ec.sign(data, key)
     return Promise.resolve(sig.toDER('hex'))
   }
 
-  verify(signature, publicKey, data) {
+  verify (signature, publicKey, data) {
     return Keystore.verify(signature, publicKey, data)
   }
 
-  static verify(signature, publicKey, data) {
-    if (!signature) throw new Error('No signature given')
-    if (!publicKey) throw new Error('Given publicKey was undefined')
-    if (!data) throw new Error('Given input data was undefined')
+  static verify (signature, publicKey, data) {
+    if (!signature) {
+      throw new Error('No signature given')
+    }
+    if (!publicKey) {
+      throw new Error('Given publicKey was undefined')
+    }
+    if (!data) {
+      throw new Error('Given input data was undefined')
+    }
     let res = false
     const key = ec.keyPair({
-      pub:  publicKey,
-      pubEnc: 'hex',
+      pub: publicKey,
+      pubEnc: 'hex'
     })
     try {
       res = ec.verify(data, signature, key)
