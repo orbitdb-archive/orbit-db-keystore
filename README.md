@@ -1,12 +1,14 @@
 # orbit-db-keystore
 
-[![](https://img.shields.io/badge/freenode-%23orbitdb-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23orbitdb)
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/orbitdb/Lobby)
 [![npm version](https://badge.fury.io/js/orbit-db-keystore.svg)](https://www.npmjs.com/package/orbit-db-keystore)
 [![node](https://img.shields.io/node/v/orbit-db-keystore.svg)](https://www.npmjs.com/package/orbit-db-keystore)
 
 > A local key manager for orbitdb
 
 ## Install
+
+This project uses [npm](http://npmjs.com/) and [nodejs](https://nodejs.org/).
 
 ```sh
 $ npm install --save orbit-db-keystore
