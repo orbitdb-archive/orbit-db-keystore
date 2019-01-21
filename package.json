@@ -32,12 +32,12 @@
   "bugs": "https://github.com/orbitdb/orbit-db-keystore/issues",
   "homepage": "https://github.com/orbitdb/orbit-db-keystore",
   "contributors": [
-    "adam-palazzo"
+    "adam-palazzo",
     "haadcode",
     "RichardLitt",
     "shamb0t",
     "thiagodelgado111",
-    "willemneal",
+    "willemneal"
   ],
   "standard": {
     "env": [
