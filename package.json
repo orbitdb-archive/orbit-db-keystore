@@ -1,10 +1,10 @@
 {
   "name": "orbit-db-keystore",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A local key manager for OrbitDB",
   "main": "index-nodejs.js",
   "browser": "index-browser.js",
-  "keywords":[
+  "keywords": [
     "orbitdb",
     "orbit-db",
     "keystore",
@@ -13,21 +13,22 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run build:dist",
-    "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --define process.env.NODE_ENV=production",
+    "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --mode production",
     "lint": "standard"
   },
   "author": "Haad",
   "license": "MIT",
   "dependencies": {
     "elliptic": "^6.4.0",
+    "libp2p-crypto": "^0.16.0",
     "lru": "^3.1.0",
     "mkdirp": "^0.5.1",
-    "node-localstorage": "^1.3.0"
+    "node-localstorage": "^1.3.1"
   },
   "devDependencies": {
     "standard": "^12.0.1",
-    "uglifyjs-webpack-plugin": "~1.3.0",
-    "webpack": "^3.10.0"
+    "webpack": "^4.29.5",
+    "webpack-cli": "^3.2.3"
   },
   "bugs": "https://github.com/orbitdb/orbit-db-keystore/issues",
   "homepage": "https://github.com/orbitdb/orbit-db-keystore",

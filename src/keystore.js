@@ -1,9 +1,22 @@
 /* globals localStorage */
 'use strict'
-
+const crypto = require('libp2p-crypto')
 const EC = require('elliptic').ec
 const ec = new EC('secp256k1')
 const LRU = require('lru')
+const secret = 'justhashing'
+
+const hashMsg = (msg) => new Promise((resolve, reject) => {
+    crypto.hmac.create('SHA256', Buffer.from(secret), (err, hmac) => {
+        if (!err) {
+            hmac.digest(msg, (err, sig) => {
+                if (!err) {
+                    resolve(sig)
+                }
+            })
+        }
+    })
+})
 
 class Keystore {
   constructor (storage) {
@@ -80,22 +93,26 @@ class Keystore {
     return key
   }
 
-  sign (key, data) {
+  async sign (key, data) {
     if (!key) {
       throw new Error('No signing key given')
     }
+
     if (!data) {
       throw new Error('Given input data was undefined')
     }
-    const sig = ec.sign(data, key)
+
+    const hash = await hashMsg(data)
+    const sig = ec.sign(hash, key)
     return Promise.resolve(sig.toDER('hex'))
   }
 
-  verify (signature, publicKey, data) {
-    return Keystore.verify(signature, publicKey, data)
+  async verify (signature, publicKey, data) {
+    const hash = await hashMsg(data)
+    return Keystore.verify(signature, publicKey, hash)
   }
 
-  static verify (signature, publicKey, data) {
+  static async verify (signature, publicKey, data) {
     if (!signature) {
       throw new Error('No signature given')
     }
@@ -111,7 +128,8 @@ class Keystore {
       pubEnc: 'hex'
     })
     try {
-      res = ec.verify(data, signature, key)
+      const hash = await hashMsg(data)
+      res = ec.verify(hash, signature, key)
     } catch (e) {
       // Catches 'Error: Signature without r or s'
     }
