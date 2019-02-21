@@ -1,8 +1,6 @@
 /* globals localStorage */
 'use strict'
-
-const EC = require('elliptic').ec
-const ec = new EC('secp256k1')
+const crypto = require('libp2p-crypto')
 const LRU = require('lru')
 
 class Keystore {
@@ -26,22 +24,30 @@ class Keystore {
     return hasKey
   }
 
-  createKey (id) {
+  async createKey (id) {
     if (!id) {
       throw new Error('id needed to create a key')
     }
 
-    const keyPair = ec.genKeyPair()
+    const genKeyPair = () => new Promise((resolve, reject) => {
+      crypto.keys.generateKeyPair('secp256k1', 256, (err, key) => {
+        if (!err) {
+          resolve(key)
+        }
+        reject(err)
+      })
+    })
+
+    const keys = await genKeyPair()
 
     const key = {
-      publicKey: keyPair.getPublic('hex'),
-      privateKey: keyPair.getPrivate('hex')
+      publicKey: keys.public.marshal().toString('hex'),
+      privateKey: keys.marshal().toString('hex')
     }
 
     this._storage.setItem(id, JSON.stringify(key))
     this._cache.set(id, key)
-
-    return keyPair
+    return keys
   }
 
   getKey (id) {
@@ -61,7 +67,6 @@ class Keystore {
     }
 
     const deserializedKey = cachedKey || JSON.parse(storedKey)
-
     if (!deserializedKey) {
       return
     }
@@ -70,25 +75,36 @@ class Keystore {
       this._cache.set(id, deserializedKey)
     }
 
-    const key = ec.keyPair({
-      pub: deserializedKey.publicKey,
-      priv: deserializedKey.privateKey,
-      pubEnc: 'hex',
-      privEnc: 'hex'
+    const genPrivKey = (pk) => new Promise((resolve, reject) => {
+      crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PrivateKey(pk, (err, key) => {
+        if (!err) {
+          resolve(key)
+        }
+        reject(err)
+      })
     })
 
-    return key
+    return genPrivKey(Buffer.from(deserializedKey.privateKey, 'hex'))
   }
 
   sign (key, data) {
     if (!key) {
       throw new Error('No signing key given')
     }
+
     if (!data) {
       throw new Error('Given input data was undefined')
     }
-    const sig = ec.sign(data, key)
-    return Promise.resolve(sig.toDER('hex'))
+
+    const genSig = () => new Promise((resolve, reject) => {
+      key.sign(data, (err, signature) => {
+        if (!err) {
+          resolve(signature.toString('hex'))
+        }
+        reject(err)
+      })
+    })
+    return genSig()
   }
 
   verify (signature, publicKey, data) {
@@ -105,17 +121,18 @@ class Keystore {
     if (!data) {
       throw new Error('Given input data was undefined')
     }
-    let res = false
-    const key = ec.keyPair({
-      pub: publicKey,
-      pubEnc: 'hex'
+
+    const isValid = (key, msg, sig) => new Promise((resolve, reject) => {
+      key.verify(msg, sig, (err, valid) => {
+        if (!err) {
+          resolve(valid)
+        }
+        reject(err)
+      })
     })
-    try {
-      res = ec.verify(data, signature, key)
-    } catch (e) {
-      // Catches 'Error: Signature without r or s'
-    }
-    return Promise.resolve(res)
+
+    const pubKey = crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PublicKey(Buffer.from(publicKey, 'hex'))
+    return isValid(pubKey, data, Buffer.from(signature, 'hex'))
   }
 }
 
