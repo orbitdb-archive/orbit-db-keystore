@@ -107,11 +107,11 @@ class Keystore {
     return genSig()
   }
 
-  verify (signature, publicKey, data) {
+  async verify (signature, publicKey, data) {
     return Keystore.verify(signature, publicKey, data)
   }
 
-  static verify (signature, publicKey, data) {
+  static async verify (signature, publicKey, data) {
     if (!signature) {
       throw new Error('No signature given')
     }
@@ -126,8 +126,10 @@ class Keystore {
       key.verify(msg, sig, (err, valid) => {
         if (!err) {
           resolve(valid)
+        } else {
+          console.warn(err.message)
+          resolve(false)
         }
-        reject(err)
       })
     })
 
