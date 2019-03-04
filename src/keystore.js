@@ -2,6 +2,7 @@
 'use strict'
 const crypto = require('libp2p-crypto')
 const LRU = require('lru')
+const { verifier } = require('./verifiers')
 
 class Keystore {
   constructor (storage) {
@@ -107,34 +108,12 @@ class Keystore {
     return genSig()
   }
 
-  async verify (signature, publicKey, data) {
-    return Keystore.verify(signature, publicKey, data)
+  async verify (signature, publicKey, data, v = 'v1') {
+    return Keystore.verify(signature, publicKey, data, v)
   }
 
-  static async verify (signature, publicKey, data) {
-    if (!signature) {
-      throw new Error('No signature given')
-    }
-    if (!publicKey) {
-      throw new Error('Given publicKey was undefined')
-    }
-    if (!data) {
-      throw new Error('Given input data was undefined')
-    }
-
-    const isValid = (key, msg, sig) => new Promise((resolve, reject) => {
-      key.verify(msg, sig, (err, valid) => {
-        if (!err) {
-          resolve(valid)
-        } else {
-          console.warn(err.message)
-          resolve(false)
-        }
-      })
-    })
-
-    const pubKey = crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PublicKey(Buffer.from(publicKey, 'hex'))
-    return isValid(pubKey, data, Buffer.from(signature, 'hex'))
+  static async verify (signature, publicKey, data, v = 'v1') {
+    return verifier(v).verify(signature, publicKey, data)
   }
 }
 

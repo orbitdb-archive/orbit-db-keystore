@@ -19,6 +19,7 @@
   "author": "Haad",
   "license": "MIT",
   "dependencies": {
+    "elliptic": "^6.4.1",
     "libp2p-crypto": "^0.16.0",
     "libp2p-crypto-secp256k1": "^0.3.0",
     "lru": "^3.1.0",
