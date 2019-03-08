@@ -1,21 +1,74 @@
-/* globals localStorage */
 'use strict'
+const levelup = require('levelup')
 const crypto = require('libp2p-crypto')
 const LRU = require('lru')
 const { verifier } = require('./verifiers')
 
 class Keystore {
-  constructor (storage) {
+  constructor (storage, directory) {
+    this.path = directory || './orbitdb'
     this._storage = storage
+    this._store = null
     this._cache = new LRU(100)
   }
 
-  hasKey (id) {
+  async open () {
+    if (this.store) {
+      return Promise.resolve()
+    }
+
+    return new Promise((resolve, reject) => {
+      const store = levelup(this._storage(this.path))
+      store.open((err) => {
+        if (err) {
+          return reject(err)
+        }
+        this._store = store
+        resolve()
+      })
+    })
+  }
+
+  async close () {
+    if (!this._store) {
+      return Promise.resolve()
+    }
+
+    return new Promise((resolve, reject) => {
+      this._store.close((err) => {
+        if (err) {
+          return reject(err)
+        }
+        this._store = null
+        resolve()
+      })
+    })
+  }
+
+  async destroy () {
+    return new Promise((resolve, reject) => {
+      this._storage.destroy(this.path, (err) => {
+        if (err) {
+          return reject(err)
+        }
+        resolve()
+      })
+    })
+  }
+
+  async hasKey (id) {
     if (!id) {
       throw new Error('id needed to check a key')
     }
+    if (!this._store) {
+      await this.open()
+    }
+    if (this._store.status && this._store.status !== 'open') {
+      return Promise.resolve(null)
+    }
+
     let hasKey = false
-    let storedKey = this._cache.get(id) || this._storage.getItem(id)
+    let storedKey = this._cache.get(id) || await this._store.get(id)
     try {
       hasKey = storedKey !== undefined && storedKey !== null
     } catch (e) {
@@ -28,6 +81,12 @@ class Keystore {
   async createKey (id) {
     if (!id) {
       throw new Error('id needed to create a key')
+    }
+    if (!this._store) {
+      await this.open()
+    }
+    if (this._store.status && this._store.status !== 'open') {
+      return Promise.resolve(null)
     }
 
     const genKeyPair = () => new Promise((resolve, reject) => {
@@ -46,19 +105,30 @@ class Keystore {
       privateKey: keys.marshal().toString('hex')
     }
 
-    this._storage.setItem(id, JSON.stringify(key))
+    try {
+      await this._store.put(id, JSON.stringify(key))
+    } catch (e) {
+      console.log(e)
+    }
     this._cache.set(id, key)
     return keys
   }
 
-  getKey (id) {
+  async getKey (id) {
     if (!id) {
       throw new Error('id needed to get a key')
     }
+    if (!this._store) {
+      await this.open()
+    }
+    if (this._store.status && this._store.status !== 'open') {
+      return Promise.resolve(null)
+    }
+
     const cachedKey = this._cache.get(id)
     let storedKey
     try {
-      storedKey = cachedKey || this._storage.getItem(id)
+      storedKey = cachedKey || await this._store.get(id)
     } catch (e) {
       // ignore ENOENT error
     }
@@ -117,18 +187,17 @@ class Keystore {
   }
 }
 
-module.exports = (LocalStorage, mkdir) => {
+module.exports = (storage, mkdir) => {
   return {
-    create: (directory = './keystore') => {
+    create: async (directory = './keystore') => {
       // If we're in Node.js, mkdir module is expected to passed
       // and we need to make sure the directory exists
       if (mkdir && mkdir.sync) {
         mkdir.sync(directory)
       }
-      // In Node.js, we use the injected LocalStorage module,
-      // in the browser, we use the browser's localStorage
-      const storage = LocalStorage ? new LocalStorage(directory) : localStorage
-      return new Keystore(storage)
+      const keystore = new Keystore(storage, directory)
+      await keystore.open()
+      return keystore
     },
     verify: Keystore.verify
   }
