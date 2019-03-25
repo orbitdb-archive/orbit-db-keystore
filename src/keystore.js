@@ -1,6 +1,7 @@
 'use strict'
 const levelup = require('levelup')
 const crypto = require('libp2p-crypto')
+const secp256k1 = require('secp256k1')
 const LRU = require('lru')
 const { verifier } = require('./verifiers')
 
@@ -75,6 +76,8 @@ class Keystore {
       // Catches 'Error: ENOENT: no such file or directory, open <path>'
       console.error('Error: ENOENT: no such file or directory')
     }
+    await this.close()
+
     return hasKey
   }
 
@@ -110,7 +113,9 @@ class Keystore {
     } catch (e) {
       console.log(e)
     }
+    await this.close()
     this._cache.set(id, key)
+
     return keys
   }
 
@@ -132,6 +137,7 @@ class Keystore {
     } catch (e) {
       // ignore ENOENT error
     }
+    await this.close()
 
     if (!storedKey) {
       return
@@ -146,6 +152,7 @@ class Keystore {
       this._cache.set(id, deserializedKey)
     }
 
+
     const genPrivKey = (pk) => new Promise((resolve, reject) => {
       crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PrivateKey(pk, (err, key) => {
         if (!err) {
@@ -158,7 +165,7 @@ class Keystore {
     return genPrivKey(Buffer.from(deserializedKey.privateKey, 'hex'))
   }
 
-  sign (key, data) {
+  async sign (key, data) {
     if (!key) {
       throw new Error('No signing key given')
     }
@@ -167,7 +174,7 @@ class Keystore {
       throw new Error('Given input data was undefined')
     }
 
-    const genSig = () => new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       key.sign(data, (err, signature) => {
         if (!err) {
           resolve(signature.toString('hex'))
@@ -175,7 +182,6 @@ class Keystore {
         reject(err)
       })
     })
-    return genSig()
   }
 
   async verify (signature, publicKey, data, v = 'v1') {
@@ -185,19 +191,29 @@ class Keystore {
   static async verify (signature, publicKey, data, v = 'v1') {
     return verifier(v).verify(signature, publicKey, data)
   }
+
+  async decompressPublicKey (key) {
+    return Keystore.decompressPublicKey(key)
+  }
+
+  static async decompressPublicKey (key) {
+    if (!key) {
+      throw new Error('No signing key given')
+    }
+    return secp256k1.publicKeyConvert(Buffer.from(key,'hex'), false).toString('hex')
+  }
 }
 
 module.exports = (storage, mkdir) => {
   return {
-    create: async (directory = './keystore') => {
+    create: (directory = './keystore') => {
       // If we're in Node.js, mkdir module is expected to passed
       // and we need to make sure the directory exists
       if (mkdir && mkdir.sync) {
         mkdir.sync(directory)
       }
-      const keystore = new Keystore(storage, directory)
-      await keystore.open()
-      return keystore
+
+      return new Keystore(storage, directory)
     },
     verify: Keystore.verify
   }
