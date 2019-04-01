@@ -1,14 +1,13 @@
 'use strict'
 
 const path = require('path')
-const Uglify = require('uglifyjs-webpack-plugin')
 
 module.exports = {
   entry: './index-browser.js',
   output: {
     libraryTarget: 'var',
     library: 'Keystore',
-    filename: 'dist/index-browser.min.js'
+    filename: 'index-browser.min.js'
   },
   target: 'web',
   devtool: 'sourcemap',
@@ -17,7 +16,6 @@ module.exports = {
     Buffer: true
   },
   plugins: [
-    new Uglify()
   ],
   resolve: {
     modules: [
