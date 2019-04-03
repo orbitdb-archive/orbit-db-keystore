@@ -102,9 +102,9 @@ class Keystore {
     })
 
     const keys = await genKeyPair()
-
+    const decompressedKey = secp256k1.publicKeyConvert(keys.public.marshal(), false)
     const key = {
-      publicKey: keys.public.marshal().toString('hex'),
+      publicKey: decompressedKey.toString('hex'),
       privateKey: keys.marshal().toString('hex')
     }
 
