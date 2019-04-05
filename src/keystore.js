@@ -3,6 +3,7 @@ const levelup = require('levelup')
 const crypto = require('libp2p-crypto')
 const secp256k1 = require('secp256k1')
 const LRU = require('lru')
+const Buffer = require('safe-buffer/').Buffer
 const { verifier } = require('./verifiers')
 
 class Keystore {
@@ -172,6 +173,10 @@ class Keystore {
 
     if (!data) {
       throw new Error('Given input data was undefined')
+    }
+
+    if (!Buffer.isBuffer(data)) {
+      data = Buffer.from(data)
     }
 
     return new Promise((resolve, reject) => {
