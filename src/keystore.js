@@ -102,9 +102,9 @@ class Keystore {
     })
 
     const keys = await genKeyPair()
-
+    const decompressedKey = secp256k1.publicKeyConvert(keys.public.marshal(), false)
     const key = {
-      publicKey: keys.public.marshal().toString('hex'),
+      publicKey: decompressedKey.toString('hex'),
       privateKey: keys.marshal().toString('hex')
     }
 
@@ -184,23 +184,23 @@ class Keystore {
     })
   }
 
+  getPublic(keys, options = {}) {
+    const formats = ['hex', 'buffer']
+    const decompress = options.decompress || true
+    const format = formats[options.format || 'hex']
+    let pubKey = keys.public.marshal()
+    if (decompress) {
+      pubKey = secp256k1.publicKeyConvert(pubKey, false)
+    }
+    return format === 'buffer' ? pubKey : pubKey.toString('hex')
+  }
+
   async verify (signature, publicKey, data, v = 'v1') {
     return Keystore.verify(signature, publicKey, data, v)
   }
 
   static async verify (signature, publicKey, data, v = 'v1') {
     return verifier(v).verify(signature, publicKey, data)
-  }
-
-  async decompressPublicKey (key) {
-    return Keystore.decompressPublicKey(key)
-  }
-
-  static async decompressPublicKey (key) {
-    if (!key) {
-      throw new Error('No signing key given')
-    }
-    return secp256k1.publicKeyConvert(Buffer.from(key,'hex'), false).toString('hex')
   }
 }
 
