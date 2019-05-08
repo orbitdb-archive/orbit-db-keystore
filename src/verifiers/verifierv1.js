@@ -1,5 +1,7 @@
 'use strict'
 const crypto = require('libp2p-crypto')
+const Buffer = require('safe-buffer/').Buffer
+
 module.exports = {
   verify: async (signature, publicKey, data) => {
     if (!signature) {
@@ -10,6 +12,10 @@ module.exports = {
     }
     if (!data) {
       throw new Error('Given input data was undefined')
+    }
+
+    if (!Buffer.isBuffer(data)) {
+      data = Buffer.from(data)
     }
 
     const isValid = (key, msg, sig) => new Promise((resolve, reject) => {
