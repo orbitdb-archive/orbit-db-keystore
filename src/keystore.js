@@ -1,5 +1,5 @@
 'use strict'
-const levelup = require('levelup')
+const level = require('level')
 const crypto = require('libp2p-crypto')
 const secp256k1 = require('secp256k1')
 const LRU = require('lru')
@@ -7,63 +7,24 @@ const Buffer = require('safe-buffer/').Buffer
 const { verifier } = require('./verifiers')
 
 class Keystore {
-  constructor (storage, directory) {
-    this.path = directory || './orbitdb'
-    this._storage = storage
-    this._store = null
+  constructor (store) {
+    this._store = store
+    if (!this._store) {
+      this._store = level('./keystore')
+    }
     this._cache = new LRU(100)
   }
 
-  async open () {
-    if (this.store) {
-      return Promise.resolve()
-    }
-
-    return new Promise((resolve, reject) => {
-      const store = levelup(this._storage(this.path))
-      store.open((err) => {
-        if (err) {
-          return reject(err)
-        }
-        this._store = store
-        resolve()
-      })
-    })
-  }
-
   async close () {
-    if (!this._store) {
-      return Promise.resolve()
-    }
-
-    return new Promise((resolve, reject) => {
-      this._store.close((err) => {
-        if (err) {
-          return reject(err)
-        }
-        this._store = null
-        resolve()
-      })
-    })
+    if (!this._store) return
+    await this._store.close()
   }
 
-  async destroy () {
-    return new Promise((resolve, reject) => {
-      this._storage.destroy(this.path, (err) => {
-        if (err) {
-          return reject(err)
-        }
-        resolve()
-      })
-    })
-  }
+  async open () { } // noop
 
   async hasKey (id) {
     if (!id) {
       throw new Error('id needed to check a key')
-    }
-    if (!this._store) {
-      await this.open()
     }
     if (this._store.status && this._store.status !== 'open') {
       return Promise.resolve(null)
@@ -77,7 +38,6 @@ class Keystore {
       // Catches 'Error: ENOENT: no such file or directory, open <path>'
       console.error('Error: ENOENT: no such file or directory')
     }
-    await this.close()
 
     return hasKey
   }
@@ -85,9 +45,6 @@ class Keystore {
   async createKey (id) {
     if (!id) {
       throw new Error('id needed to create a key')
-    }
-    if (!this._store) {
-      await this.open()
     }
     if (this._store.status && this._store.status !== 'open') {
       return Promise.resolve(null)
@@ -114,7 +71,6 @@ class Keystore {
     } catch (e) {
       console.log(e)
     }
-    await this.close()
     this._cache.set(id, key)
 
     return keys
@@ -138,7 +94,6 @@ class Keystore {
     } catch (e) {
       // ignore ENOENT error
     }
-    await this.close()
 
     if (!storedKey) {
       return
@@ -152,7 +107,6 @@ class Keystore {
     if (!cachedKey) {
       this._cache.set(id, deserializedKey)
     }
-
 
     const genPrivKey = (pk) => new Promise((resolve, reject) => {
       crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PrivateKey(pk, (err, key) => {
@@ -189,10 +143,13 @@ class Keystore {
     })
   }
 
-  getPublic(keys, options = {}) {
+  getPublic (keys, options = {}) {
     const formats = ['hex', 'buffer']
-    const decompress = options.decompress || true
-    const format = formats[options.format || 'hex']
+    const decompress = typeof options.decompress === 'undefined' ? true : options.decompress
+    const format = options.format || 'hex'
+    if (formats.indexOf(format) === -1) {
+      throw new Error('Supported formats are `hex` and `buffer`')
+    }
     let pubKey = keys.public.marshal()
     if (decompress) {
       pubKey = secp256k1.publicKeyConvert(pubKey, false)
@@ -209,17 +166,4 @@ class Keystore {
   }
 }
 
-module.exports = (storage, mkdir) => {
-  return {
-    create: (directory = './keystore') => {
-      // If we're in Node.js, mkdir module is expected to passed
-      // and we need to make sure the directory exists
-      if (mkdir && mkdir.sync) {
-        mkdir.sync(directory)
-      }
-
-      return new Keystore(storage, directory)
-    },
-    verify: Keystore.verify
-  }
-}
+module.exports = Keystore

@@ -1,2 +1,4 @@
 node_modules/
 dist/index-browser.min.js.map
+keystore/
+keystore-test/
