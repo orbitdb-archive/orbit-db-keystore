@@ -70,8 +70,8 @@ class Keystore {
     }
 
     let hasKey = false
-    let storedKey = this._cache.get(id) || await this._store.get(id)
     try {
+      let storedKey = this._cache.get(id) || await this._store.get(id)
       hasKey = storedKey !== undefined && storedKey !== null
     } catch (e) {
       // Catches 'Error: ENOENT: no such file or directory, open <path>'
