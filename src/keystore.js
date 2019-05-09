@@ -7,49 +7,34 @@ const Buffer = require('safe-buffer/').Buffer
 const { verifier } = require('./verifiers')
 
 class Keystore {
-  constructor (storage, directory) {
-    this.path = directory || './orbitdb'
-    this._storage = storage
-    this._store = null
+  constructor (store) {
+    this._store = store
     this._cache = new LRU(100)
   }
 
   async open () {
-    if (this.store) {
+    const status = this._store._db.status
+    if (status === 'opening' || status === 'open') {
       return Promise.resolve()
     }
 
     return new Promise((resolve, reject) => {
-      const store = levelup(this._storage(this.path))
-      store.open((err) => {
+      this._store.open((err) => {
         if (err) {
           return reject(err)
         }
-        this._store = store
         resolve()
       })
     })
   }
 
   async close () {
-    if (!this._store) {
+    if (this._store._db.status === 'closed') {
       return Promise.resolve()
     }
 
     return new Promise((resolve, reject) => {
       this._store.close((err) => {
-        if (err) {
-          return reject(err)
-        }
-        this._store = null
-        resolve()
-      })
-    })
-  }
-
-  async destroy () {
-    return new Promise((resolve, reject) => {
-      this._storage.destroy(this.path, (err) => {
         if (err) {
           return reject(err)
         }
@@ -77,7 +62,6 @@ class Keystore {
       // Catches 'Error: ENOENT: no such file or directory, open <path>'
       console.error('Error: ENOENT: no such file or directory')
     }
-    await this.close()
 
     return hasKey
   }
@@ -114,7 +98,6 @@ class Keystore {
     } catch (e) {
       console.log(e)
     }
-    await this.close()
     this._cache.set(id, key)
 
     return keys
@@ -138,7 +121,6 @@ class Keystore {
     } catch (e) {
       // ignore ENOENT error
     }
-    await this.close()
 
     if (!storedKey) {
       return
@@ -214,11 +196,23 @@ module.exports = (storage, mkdir) => {
     create: (directory = './keystore') => {
       // If we're in Node.js, mkdir module is expected to passed
       // and we need to make sure the directory exists
-      if (mkdir && mkdir.sync) {
+      if (mkdir) { // TODO: What is mkdir.c??
         mkdir.sync(directory)
       }
 
-      return new Keystore(storage, directory)
+      const store = levelup(storage(directory))
+      const keystore = new Keystore(store)
+      return keystore
+    },
+    destroy: () => {
+      return new Promise((resolve, reject) => {
+        storage.destroy(directory, (err) => {
+          if (err) {
+            return reject(err)
+          }
+          resolve()
+        })
+      })
     },
     verify: Keystore.verify
   }
