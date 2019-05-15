@@ -47,7 +47,7 @@ class Keystore {
     if (!id) {
       throw new Error('id needed to check a key')
     }
-    if (!this._store) {
+    if (!this._store || this._store._db.status === 'closed') {
       await this.open()
     }
     if (this._store.status && this._store.status !== 'open') {
@@ -70,7 +70,7 @@ class Keystore {
     if (!id) {
       throw new Error('id needed to create a key')
     }
-    if (!this._store) {
+    if (!this._store || this._store._db.status === 'closed') {
       await this.open()
     }
     if (this._store.status && this._store.status !== 'open') {
@@ -107,7 +107,7 @@ class Keystore {
     if (!id) {
       throw new Error('id needed to get a key')
     }
-    if (!this._store) {
+    if (!this._store || this._store._db.status === 'closed') {
       await this.open()
     }
     if (this._store.status && this._store.status !== 'open') {
