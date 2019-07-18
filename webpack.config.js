@@ -3,7 +3,7 @@
 const path = require('path')
 
 module.exports = {
-  entry: './index-browser.js',
+  entry: './src/keystore.js',
   output: {
     libraryTarget: 'var',
     library: 'Keystore',

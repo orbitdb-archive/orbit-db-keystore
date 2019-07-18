@@ -1,26 +1,28 @@
 'use strict'
 
-var assert = require('assert');
-const Log = require('ipfs-log')
+var assert = require('assert')
+const path = require('path')
+const rmrf = require('rimraf')
 const level = require('leveldown')
 const mkdirp = require('mkdirp')
 const Keystore = require('../src/keystore')
-
-const {
-  config,
-  testAPIs,
-  startIpfs,
-  stopIpfs,
-  implementations
-} = require('orbit-db-test-utils')
-
+const fs = require('fs-extra')
+const { config, implementations } = require('orbit-db-test-utils')
 const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
 const storage = require('orbit-db-storage-adapter')(properLevelModule)
 
 let store
 
+const fixturePath = path.join('test', 'fixtures', 'signingKeys')
+const storagePath = path.join('test', 'signingKeys')
+
 before(async() => {
+  await fs.copy(fixturePath, storagePath)
   store = await storage.createStore(`./keystore`)
+})
+
+after(async() => {
+  rmrf.sync(storagePath)
 })
 
 describe(`constructor`, async() =>  {
@@ -186,7 +188,7 @@ describe('#sign()', async() => {
   let keystore, key, signingStore
 
   before(async() => {
-    signingStore = await storage.createStore('./test/fixtures/signingKeys')
+    signingStore = await storage.createStore(storagePath)
     keystore = new Keystore(signingStore)
     key = await keystore.getKey("signing")
   })
@@ -223,7 +225,7 @@ describe('#getPublic', async () => {
   let keystore, key, signingStore
 
   before(async () => {
-    signingStore = await storage.createStore('./test/fixtures/signingKeys')
+    signingStore = await storage.createStore(storagePath)
     keystore = new Keystore(signingStore)
     key = await keystore.getKey("getPublic")
   })
@@ -287,7 +289,7 @@ describe("#verify", async() => {
   let keystore, signingStore, publicKey
 
   before(async() => {
-    signingStore = await storage.createStore('./test/fixtures/signingKeys')
+    signingStore = await storage.createStore(storagePath)
     keystore = new Keystore(signingStore)
     const keys = await keystore.getKey("signing")
     publicKey = await keystore.getPublic(keys)
