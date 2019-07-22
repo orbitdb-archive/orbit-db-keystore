@@ -15,7 +15,7 @@ jobs:
       - run: make clean-dependencies
       - run: make deps
       - run: npm run lint
-      - run: cp -R conf src node_modules test package.json /tmp/workspace
+      - run: cp -R src node_modules test package.json /tmp/workspace
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
