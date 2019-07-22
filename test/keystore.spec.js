@@ -62,6 +62,9 @@ describe(`#createKey()`, async => {
 
   beforeEach(async() => {
     keystore = new Keystore(store)
+    if(store.db.status !== 'open') {
+      await store.open()
+    }
   })
 
   it("creates a new key", async() => {
@@ -80,9 +83,10 @@ describe(`#createKey()`, async => {
     }
   })
 
-  it.skip('throws an error accessing a closed store', async() => {
+  it('throws an error accessing a closed store', async() => {
     try {
-      // await keystore.close()
+      await store.close()
+      await keystore.createKey(id)
     } catch (e) {
       assert.strictEqual(true, true)
     }
@@ -97,6 +101,9 @@ describe("#hasKey()", async() => {
   let keystore
 
   before(async() => {
+    if(store.db.status !== 'open') {
+      await store.open()
+    }
     keystore = new Keystore(store)
     await keystore.createKey("YYZ")
   })
@@ -123,9 +130,10 @@ describe("#hasKey()", async() => {
     }
   })
 
-  it.skip('throws an error accessing a closed store', async() => {
+  it('throws an error accessing a closed store', async() => {
     try {
-      // await keystore.close()
+      await store.close()
+      await keystore.hasKey('XXX')
     } catch (e) {
       assert.strictEqual(true, true)
     }
@@ -140,6 +148,9 @@ describe('#getKey()', async() => {
   let keystore
 
   before(async () => {
+    if(store.db.status !== 'open') {
+      await store.open()
+    }
     keystore = new Keystore(store)
     await keystore.createKey("ZZZ")
   })
@@ -169,9 +180,10 @@ describe('#getKey()', async() => {
     }
   })
 
-  it.skip('throws an error accessing a closed store', async() => {
+  it('throws an error accessing a closed store', async() => {
     try {
-      // await keystore.close()
+      await store.close()
+      await keystore.getKey('ZZZ')
     } catch (e) {
       assert.strictEqual(true, true)
     }
