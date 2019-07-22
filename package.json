@@ -10,7 +10,7 @@
     "kv-store"
   ],
   "scripts": {
-    "test": "TEST=all mocha",
+    "test:node": "TEST=all mocha",
     "build": "npm run build:dist",
     "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --mode production",
     "lint": "standard"
