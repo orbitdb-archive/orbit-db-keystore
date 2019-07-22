@@ -10,7 +10,9 @@
     "kv-store"
   ],
   "scripts": {
+    "test": "npm run test:node && npm run test:browser",
     "test:node": "TEST=all mocha",
+    "test:browser": "npm run build:tests && mocha-headless-chrome -f ./test/browser/index.html -a no-sandbox",
     "build": "npm run build:dist",
     "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --mode production",
     "lint": "standard"
