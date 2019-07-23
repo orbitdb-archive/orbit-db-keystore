@@ -51,9 +51,9 @@ workflows:
       - test-node:
           requires:
             - setup
-              # - test-browser:
-              # requires:
-              # - setup
-              # - build:
-              # requires:
-              # - setup
+      - test-browser
+          requires:
+            - setup
+      - build
+          requires:
+            - setup
