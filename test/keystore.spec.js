@@ -2,17 +2,10 @@
 
 var assert = require('assert');
 const Log = require('ipfs-log')
-const level = require('leveldown')
 const mkdirp = require('mkdirp')
 const Keystore = require('../src/keystore')
 
-const {
-  config,
-  testAPIs,
-  startIpfs,
-  stopIpfs,
-  implementations
-} = require('orbit-db-test-utils')
+const implementations = require('orbit-db-test-utils/implementations')
 
 const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
 const storage = require('orbit-db-storage-adapter')(properLevelModule)
@@ -116,6 +109,7 @@ describe("#hasKey()", async() => {
   it('returns false if key does not exist', async() => {
     let hasKey
     try {
+      debugger;
       hasKey = await keystore.hasKey("XXX")
     } catch(e) {
       assert.strictEqual(hasKey, true)
