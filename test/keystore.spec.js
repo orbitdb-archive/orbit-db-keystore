@@ -1,7 +1,6 @@
 'use strict'
 
 var assert = require('assert');
-const Log = require('ipfs-log')
 const mkdirp = require('mkdirp')
 const Keystore = require('../src/keystore')
 
@@ -13,7 +12,7 @@ const storage = require('orbit-db-storage-adapter')(properLevelModule)
 let store
 
 before(async() => {
-  store = await storage.createStore(`./keystore`)
+  store = await storage.createStore(`./keystore-test`)
 })
 
 describe(`constructor`, async() =>  {
@@ -41,12 +40,9 @@ describe(`constructor`, async() =>  {
     assert.strictEqual(keystore._cache.max, 100)
   })
 
-  it('throws an error upon not having a proper store', async() => {
-    try {
-      const badKeystore = new Keystore()
-    } catch (e) {
-      assert.strictEqual(true, true)
-    }
+  it('creates a proper leveldown / level-js store if not passed a store', async() => {
+    const keystore = new Keystore()
+    assert.strictEqual(keystore._store._db.status, 'opening')
   })
 })
 
