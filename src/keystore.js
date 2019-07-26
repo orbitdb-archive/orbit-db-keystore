@@ -1,5 +1,5 @@
 'use strict'
-const levelup = require('levelup')
+const level = require('level')
 const crypto = require('libp2p-crypto')
 const secp256k1 = require('secp256k1')
 const LRU = require('lru')
@@ -8,10 +8,10 @@ const { verifier } = require('./verifiers')
 
 class Keystore {
   constructor (store) {
-    if (!store) {
-      throw new Error('First argument of Keystore constructor must be a valid leveldown store')
-    }
     this._store = store
+    if (!this._store) {
+      this._store = level('./keystore')
+    }
     this._cache = new LRU(100)
   }
 

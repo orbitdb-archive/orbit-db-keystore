@@ -13,8 +13,8 @@ build: test
 
 clean:
 	rm -rf ipfs/
-	rm -rf keystore_go-ipfs
-	rm -rf keystore_js-ipfs
+	rm -rf keystore-test
+	rm -rf keystore
 
 clean-dependencies: clean
 	rm -f package-lock.json

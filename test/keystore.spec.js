@@ -7,7 +7,8 @@ const level = require('leveldown')
 const mkdirp = require('mkdirp')
 const Keystore = require('../src/keystore')
 const fs = require('fs-extra')
-const { config, implementations } = require('orbit-db-test-utils')
+const implementations = require('orbit-db-test-utils/implementations')
+
 const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
 const storage = require('orbit-db-storage-adapter')(properLevelModule)
 
@@ -18,7 +19,7 @@ const storagePath = path.join('test', 'signingKeys')
 
 before(async() => {
   await fs.copy(fixturePath, storagePath)
-  store = await storage.createStore(`./keystore`)
+  store = await storage.createStore(`./keystore-test`)
 })
 
 after(async() => {
@@ -50,12 +51,9 @@ describe(`constructor`, async() =>  {
     assert.strictEqual(keystore._cache.max, 100)
   })
 
-  it('throws an error upon not having a proper store', async() => {
-    try {
-      const badKeystore = new Keystore()
-    } catch (e) {
-      assert.strictEqual(true, true)
-    }
+  it('creates a proper leveldown / level-js store if not passed a store', async() => {
+    const keystore = new Keystore()
+    assert.strictEqual(keystore._store._db.status, 'opening')
   })
 })
 
@@ -64,6 +62,9 @@ describe(`#createKey()`, async => {
 
   beforeEach(async() => {
     keystore = new Keystore(store)
+    if(store.db.status !== 'open') {
+      await store.open()
+    }
   })
 
   it("creates a new key", async() => {
@@ -82,9 +83,10 @@ describe(`#createKey()`, async => {
     }
   })
 
-  it.skip('throws an error accessing a closed store', async() => {
+  it('throws an error accessing a closed store', async() => {
     try {
-      // await keystore.close()
+      await store.close()
+      await keystore.createKey(id)
     } catch (e) {
       assert.strictEqual(true, true)
     }
@@ -99,6 +101,9 @@ describe("#hasKey()", async() => {
   let keystore
 
   before(async() => {
+    if(store.db.status !== 'open') {
+      await store.open()
+    }
     keystore = new Keystore(store)
     await keystore.createKey("YYZ")
   })
@@ -111,6 +116,7 @@ describe("#hasKey()", async() => {
   it('returns false if key does not exist', async() => {
     let hasKey
     try {
+      debugger;
       hasKey = await keystore.hasKey("XXX")
     } catch(e) {
       assert.strictEqual(hasKey, true)
@@ -125,9 +131,10 @@ describe("#hasKey()", async() => {
     }
   })
 
-  it.skip('throws an error accessing a closed store', async() => {
+  it('throws an error accessing a closed store', async() => {
     try {
-      // await keystore.close()
+      await store.close()
+      await keystore.hasKey('XXX')
     } catch (e) {
       assert.strictEqual(true, true)
     }
@@ -142,6 +149,9 @@ describe('#getKey()', async() => {
   let keystore
 
   before(async () => {
+    if(store.db.status !== 'open') {
+      await store.open()
+    }
     keystore = new Keystore(store)
     await keystore.createKey("ZZZ")
   })
@@ -171,9 +181,10 @@ describe('#getKey()', async() => {
     }
   })
 
-  it.skip('throws an error accessing a closed store', async() => {
+  it('throws an error accessing a closed store', async() => {
     try {
-      // await keystore.close()
+      await store.close()
+      await keystore.getKey('ZZZ')
     } catch (e) {
       assert.strictEqual(true, true)
     }
