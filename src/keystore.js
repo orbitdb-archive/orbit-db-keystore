@@ -8,19 +8,24 @@ const { verifier } = require('./verifiers')
 
 class Keystore {
   constructor (store) {
-    this._store = store
-    if (!this._store) {
-      this._store = level('./keystore')
+    if (!store || typeof store === 'string') {
+      const path = store || './keystore'
+      store = level(path)
     }
+    this._store = store
     this._cache = new LRU(100)
+  }
+
+  async open () {
+    if (this.store) {
+      return Promise.resolve()
+    }
   }
 
   async close () {
     if (!this._store) return
     await this._store.close()
   }
-
-  async open () { } // noop
 
   async hasKey (id) {
     if (!id) {
