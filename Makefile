@@ -9,6 +9,7 @@ test: deps
 build: test
 	npm run build
 	@echo "Build success!"
+	cp dist/orbit-db-keystore.min.js dist/orbit-db-keystore.min.js.map examples/browser
 	@echo "Built: 'dist/', 'examples/browser/'"
 
 clean:
