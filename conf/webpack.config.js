@@ -10,6 +10,7 @@ module.exports = {
     filename: 'orbit-db-keystore.min.js'
   },
   target: 'web',
+  mode: 'production',
   devtool: 'sourcemap',
   node: {
     console: false,
