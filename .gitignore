@@ -2,3 +2,4 @@ node_modules/
 dist/index-browser.min.js.map
 keystore/
 keystore-test/
+test/browser/bundle.js test/browser/bundle.js.map
