@@ -18,8 +18,10 @@ class Keystore {
 
   async open () {
     if (this.store) {
+      await this._store.open()
       return Promise.resolve()
     }
+    return Promise.reject(new Error('Keystore: No store found to open'))
   }
 
   async close () {
