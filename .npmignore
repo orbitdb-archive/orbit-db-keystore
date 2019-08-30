@@ -1,6 +1,9 @@
 node_modules/
-dist/index-browser.min.js.map
+dist/*.js.map
 keystore/
 keystore-test/
-test/browser/bundle.js*
-examples/browser/orbit-db-keystore.min.js*
+test
+.circleci
+conf
+examples
+Makefile
