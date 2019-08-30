@@ -3,3 +3,4 @@ keystore/
 keystore-test/
 test/browser/bundle.js
 test/browser/bundle.js.map
+examples/browser/orbit-db-keystore.min.js*
