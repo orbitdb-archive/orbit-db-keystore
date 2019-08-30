@@ -1,6 +1,6 @@
 {
   "name": "orbit-db-keystore",
-  "version": "0.2.2",
+  "version": "0.3.0-rc1",
   "description": "A local key manager for OrbitDB",
   "main": "src/keystore.js",
   "keywords": [
