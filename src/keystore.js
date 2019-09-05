@@ -1,4 +1,6 @@
 'use strict'
+
+const fs = (typeof window === 'object' || typeof self === 'object') ? null : eval('require("fs")') // eslint-disable-line
 const level = require('level')
 const crypto = require('libp2p-crypto')
 const secp256k1 = require('secp256k1')
@@ -10,6 +12,7 @@ class Keystore {
   constructor (store) {
     if (!store || typeof store === 'string') {
       const path = store || './keystore'
+      if (fs && fs.mkdirSync) fs.mkdirSync(path, { recursive: true })
       store = level(path)
     }
     this._store = store
