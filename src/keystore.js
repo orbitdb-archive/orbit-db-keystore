@@ -14,6 +14,7 @@ function createStore (path = './keystore') {
   }
   return level(path)
 }
+const verifiedCache = new LRU(1000)
 
 class Keystore {
   constructor (input = {}) {
@@ -182,7 +183,27 @@ class Keystore {
   }
 
   static async verify (signature, publicKey, data, v = 'v1') {
-    return verifier(v).verify(signature, publicKey, data)
+    const cached = verifiedCache.get(signature)
+    let res = false
+    if (!cached) {
+      const verified = await verifier(v).verify(signature, publicKey, data)
+      res = verified
+      if (verified) {
+        verifiedCache.set(signature, { publicKey, data })
+      }
+    } else {
+      const compare = (cached, data, v) => {
+        let match
+        if (v === 'v0') {
+          match = Buffer.compare(Buffer.alloc(30, cached), Buffer.alloc(30, data)) === 0
+        } else {
+          match = Buffer.isBuffer(data) ? Buffer.compare(cached, data) === 0 : cached === data
+        }
+        return match
+      }
+      res = cached.publicKey === publicKey && compare(cached.data, data, v)
+    }
+    return res
   }
 }
 
