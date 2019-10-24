@@ -20,7 +20,7 @@ class Keystore {
   }
 
   async open () {
-    if (this.store) {
+    if (this._store) {
       await this._store.open()
       return Promise.resolve()
     }
