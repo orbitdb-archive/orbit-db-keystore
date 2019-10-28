@@ -5,6 +5,7 @@ const path = require('path')
 const rmrf = require('rimraf')
 const Keystore = require('../src/keystore')
 const fs = require('fs-extra')
+const LRU = require('lru')
 
 const implementations = require('orbit-db-test-utils/implementations')
 
@@ -53,6 +54,29 @@ describe(`constructor`, async () => {
   it('creates a proper leveldown / level-js store if not passed a store', async () => {
     const keystore = new Keystore()
     assert.strictEqual(keystore._store._db.status, 'opening')
+    await keystore.close()
+  })
+
+  it('creates a keystore with empty options', async () => {
+    const keystore = new Keystore({})
+    assert.strictEqual(keystore._store._db.status, 'opening')
+    await keystore.close()
+  })
+
+  it('creates a keystore with only cache', async () => {
+    const cache = new LRU(10)
+    const keystore = new Keystore({ cache })
+    assert.strictEqual(keystore._store._db.status, 'opening')
+    assert(keystore._cache === cache)
+    await keystore.close()
+  })
+
+  it('creates a keystore with both', async () => {
+    const cache = new LRU(10)
+    const keystore = new Keystore({ store, cache })
+    assert.strictEqual(keystore._store._db.status, 'open')
+    assert(keystore._cache === cache)
+    assert(keystore._store === store)
   })
 })
 
