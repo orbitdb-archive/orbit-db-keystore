@@ -322,3 +322,34 @@ describe('#verify', async () => {
     signingStore.close()
   })
 })
+
+describe('#open', async () => {
+  let keystore, signingStore
+
+  beforeEach(async () => {
+    signingStore = await storage.createStore(storagePath)
+    keystore = new Keystore(signingStore)
+    signingStore.close()
+  })
+
+  it('closes then open', async () => {
+    assert.strictEqual(signingStore.db.status, 'new')
+    await keystore.open()
+    assert.strictEqual(signingStore.db.status, 'open')
+  })
+
+  it('fails when no store', async () => {
+    let error = false
+    try {
+      keystore._store = undefined
+      await keystore.open()
+    } catch (e) {
+      error = e.message
+    }
+    assert.strictEqual(error, 'Keystore: No store found to open')
+  })
+
+  afterEach(async () => {
+    signingStore.close()
+  })
+})
