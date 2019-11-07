@@ -8,15 +8,25 @@ const LRU = require('lru')
 const Buffer = require('safe-buffer/').Buffer
 const { verifier } = require('./verifiers')
 
+function createStore (path = './keystore') {
+  if (fs && fs.mkdirSync) {
+    fs.mkdirSync(path, { recursive: true })
+  }
+  return level(path)
+}
+
 class Keystore {
-  constructor (store) {
-    if (!store || typeof store === 'string') {
-      const path = store || './keystore'
-      if (fs && fs.mkdirSync) fs.mkdirSync(path, { recursive: true })
-      store = level(path)
+  constructor (input = {}) {
+    if (typeof input === 'string') {
+      this._store = createStore(input)
+    } else if (typeof input.open === 'function') {
+      this._store = input
+    } else if (typeof input.store === 'string') {
+      this._store = createStore(input.store)
+    } else {
+      this._store = input.store || createStore()
     }
-    this._store = store
-    this._cache = new LRU(100)
+    this._cache = input.cache || new LRU(100)
   }
 
   async open () {
