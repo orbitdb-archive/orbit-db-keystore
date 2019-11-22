@@ -338,14 +338,14 @@ describe('#verify', async function () {
   })
 
   it('verifies content with cache', async () => {
-    const data = 'data'.repeat(1024*1024*10)
+    const data = 'data'.repeat(1024 * 1024 * 10)
     const sig = await keystore.sign(key, data)
     const startTime = new Date().getTime()
     await keystore.verify(sig, publicKey, data)
     const first = new Date().getTime()
     await keystore.verify(sig, publicKey, data)
     const after = new Date().getTime()
-    console.log("First pass:", first - startTime, 'ms', "Cached:", after - first, 'ms')
+    console.log('First pass:', first - startTime, 'ms', 'Cached:', after - first, 'ms')
     assert.strictEqual(first - startTime > after - first, true)
   })
 
