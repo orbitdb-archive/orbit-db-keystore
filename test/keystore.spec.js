@@ -320,20 +320,33 @@ describe('#getPublic', async () => {
   })
 })
 
-describe('#verify', async () => {
-  let keystore, signingStore, publicKey
+describe('#verify', async function () {
+  this.timeout(5000)
+  let keystore, signingStore, publicKey, key
 
   before(async () => {
     signingStore = await storage.createStore(storagePath)
     keystore = new Keystore(signingStore)
-    const keys = await keystore.getKey('signing')
-    publicKey = await keystore.getPublic(keys)
+    key = await keystore.getKey('signing')
+    publicKey = await keystore.getPublic(key)
   })
 
   it('verifies content', async () => {
     const signature = '304402206d0287e576e02af2887b68b7b3a87634fce33ffe7702ce3ba4feff54f3d4f50d02206a7974724dc0c8e692a434441b9549729e1252ff3391f436a41e69db59c5bb1e'
     const verified = await keystore.verify(signature, publicKey, 'data data data')
     assert.strictEqual(verified, true)
+  })
+
+  it('verifies content with cache', async () => {
+    const data = 'data'.repeat(1024*1024*10)
+    const sig = await keystore.sign(key, data)
+    const startTime = new Date().getTime()
+    await keystore.verify(sig, publicKey, data)
+    const first = new Date().getTime()
+    await keystore.verify(sig, publicKey, data)
+    const after = new Date().getTime()
+    console.log("First pass:", first - startTime, 'ms', "Cached:", after - first, 'ms')
+    assert.strictEqual(first - startTime > after - first, true)
   })
 
   it('does not verify content with bad signature', async () => {
