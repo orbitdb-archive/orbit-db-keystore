@@ -338,7 +338,7 @@ describe('#verify', async function () {
   })
 
   it('verifies content with cache', async () => {
-    const data = 'data'.repeat(1024 * 1024 * 10)
+    const data = 'data'.repeat(1024 * 1024)
     const sig = await keystore.sign(key, data)
     const startTime = new Date().getTime()
     await keystore.verify(sig, publicKey, data)
