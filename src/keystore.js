@@ -96,6 +96,20 @@ class Keystore {
 
     return keys
   }
+  
+  async importKey(id,keyPair) {
+     if(await this.hasKey(id))
+     {
+       throw new Error('id already exists')
+     }
+    
+     try { 
+      await this._store.put(id, JSON.stringify(keyPair))
+    } catch (e) {
+      console.log(e)
+    }
+    this._cache.set(id, keyPair)
+  }
 
   async getKey (id) {
     if (!id) {
