@@ -81,7 +81,7 @@ class Keystore {
     })
 
     const keys = await genKeyPair()
-    const decompressedKey = secp256k1.publicKeyConvert(keys.public.marshal(), false)
+    const decompressedKey = Buffer.from(secp256k1.publicKeyConvert(keys.public.marshal(), false))
     const key = {
       publicKey: decompressedKey.toString('hex'),
       privateKey: keys.marshal().toString('hex')
@@ -173,7 +173,7 @@ class Keystore {
     }
     let pubKey = keys.public.marshal()
     if (decompress) {
-      pubKey = secp256k1.publicKeyConvert(pubKey, false)
+      pubKey = Buffer.from(secp256k1.publicKeyConvert(pubKey, false))
     }
     return format === 'buffer' ? pubKey : pubKey.toString('hex')
   }
