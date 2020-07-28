@@ -25,8 +25,7 @@
     "level": "~5.0.1",
     "leveldown": "~5.1.1",
     "levelup": "~4.1.0",
-    "libp2p-crypto": "^0.16.0",
-    "libp2p-crypto-secp256k1": "^0.3.0",
+    "libp2p-crypto": "^0.17.8",
     "lru": "^3.1.0",
     "mkdirp": "^0.5.5",
     "safe-buffer": "^5.2.1"
