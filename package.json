@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "test": "npm run test:node && npm run test:browser",
-    "test:node": "TEST=all mocha",
+    "test:node": "cross-env TEST=all mocha",
     "test:browser": "npm run build:tests && mocha-headless-chrome -f ./test/browser/index.html -a no-sandbox",
     "build": "npm run build:dist",
     "build:dist": "webpack --config ./conf/webpack.config.js --display-modules --sort-modules-by size --mode production",
@@ -39,6 +39,7 @@
     "@babel/preset-env": "^7.10.4",
     "@babel/runtime": "^7.10.5",
     "babel-loader": "~8.0.4",
+    "cross-env": "^7.0.2",
     "json-loader": "~0.5.7",
     "mocha": "^6.2.3",
     "mocha-headless-chrome": "^2.0.3",

@@ -7,6 +7,8 @@ const secp256k1 = require('secp256k1')
 const LRU = require('lru')
 const Buffer = require('safe-buffer/').Buffer
 const { verifier } = require('./verifiers')
+const EC = require('elliptic').ec;
+var ec = new EC('secp256k1');
 
 function createStore (path = './keystore') {
   if (fs && fs.mkdirSync) {
@@ -63,7 +65,7 @@ class Keystore {
     return hasKey
   }
 
-  async createKey (id) {
+  async createKey (id, options = {}) {
     if (!id) {
       throw new Error('id needed to create a key')
     }
@@ -71,22 +73,16 @@ class Keystore {
       return Promise.resolve(null)
     }
 
-    const genKeyPair = () => new Promise((resolve, reject) => {
-      crypto.keys.generateKeyPair('secp256k1', 256, (err, key) => {
-        if (!err) {
-          resolve(key)
-        }
-        reject(err)
-      })
+    //Throws error is seed is lower than 192 bit length.
+    const keys =  ec.genKeyPair({
+      entropy: options.seed
     })
-
-    const keys = await genKeyPair()
-    const decompressedKey = Buffer.from(secp256k1.publicKeyConvert(keys.public.marshal(), false))
+    const decompressedKey = keys.getPublic().encode("hex", true)
     const key = {
-      publicKey: decompressedKey.toString('hex'),
-      privateKey: keys.marshal().toString('hex')
+      publicKey: decompressedKey,
+      privateKey: keys.getPrivate().toString('hex')
     }
-
+    
     try {
       await this._store.put(id, JSON.stringify(key))
     } catch (e) {
