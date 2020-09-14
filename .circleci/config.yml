@@ -31,13 +31,13 @@ jobs:
           at: ./
       - run: npm run test:node
   test-browser:
-    executor: node10-browsers
+    executor: node12-browsers
     steps:
       - attach_workspace:
           at: ./
       - run: npm run test:browser
   build:
-    executor: node10-browsers
+    executor: node12-browsers
     steps:
       - attach_workspace:
           at: ./
