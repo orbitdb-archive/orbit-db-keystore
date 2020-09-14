@@ -102,13 +102,13 @@ describe(`#createKey()`, async => {
     const id = 'X2'
 
     await keystore.createKey(id, {
-      seed: "jANfduGRj4HU9Pk6nJzujANfduGRj4HU9Pk6nJzu"
+      seed: 'jANfduGRj4HU9Pk6nJzujANfduGRj4HU9Pk6nJzu'
     })
     const hasKey = await keystore.hasKey(id)
     assert.strictEqual(hasKey, true)
-    //Deterministic public key
+    // Deterministic public key
     const keyContent = await keystore.getKey(id)
-    assert.strictEqual(keyContent._publicKey.toString('hex'), "0328401cd1b561040b87cd66563be722ba429b42d6abfeca9cb4c34e9845c86d2e")
+    assert.strictEqual(keyContent._publicKey.toString('hex'), '0328401cd1b561040b87cd66563be722ba429b42d6abfeca9cb4c34e9845c86d2e')
   })
 
   it('throws an error upon not receiving an ID', async () => {
