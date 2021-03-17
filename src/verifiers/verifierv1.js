@@ -1,6 +1,6 @@
 'use strict'
 const crypto = require('libp2p-crypto')
-const Buffer = require('safe-buffer/').Buffer
+const Buffer = require('safe-buffer').Buffer
 
 module.exports = {
   verify: async (signature, publicKey, data) => {
