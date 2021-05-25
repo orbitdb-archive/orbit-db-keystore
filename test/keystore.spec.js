@@ -98,11 +98,11 @@ describe(`#createKey()`, async => {
     assert.strictEqual(hasKey, true)
   })
 
-  it('creates a new key using seed', async () => {
+  it('creates a new key using provided entropy', async () => {
     const id = 'X2'
 
     await keystore.createKey(id, {
-      seed: 'jANfduGRj4HU9Pk6nJzujANfduGRj4HU9Pk6nJzu'
+      entropy: 'jANfduGRj4HU9Pk6nJzujANfduGRj4HU9Pk6nJzu'
     })
     const hasKey = await keystore.hasKey(id)
     assert.strictEqual(hasKey, true)
