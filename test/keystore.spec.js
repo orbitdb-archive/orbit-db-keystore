@@ -108,7 +108,10 @@ describe('#createKey()', async => {
     assert.strictEqual(hasKey, true)
     // Deterministic public key
     const keyContent = await keystore.getKey(id)
-    assert.strictEqual(keyContent._publicKey.toString('hex'), '0328401cd1b561040b87cd66563be722ba429b42d6abfeca9cb4c34e9845c86d2e')
+    assert.strictEqual(
+      Buffer.from(keyContent._publicKey).toString('hex'),
+      '0328401cd1b561040b87cd66563be722ba429b42d6abfeca9cb4c34e9845c86d2e'
+    )
   })
 
   it('throws an error upon not receiving an ID', async () => {
@@ -198,7 +201,7 @@ describe('#getKey()', async () => {
 
     assert.strictEqual(key._publicKey.length, 33)
     assert.strictEqual(key._key.length, 32)
-    assert.strictEqual(key._publicKey.constructor, Buffer)
+    assert.strictEqual(key._publicKey.constructor, Uint8Array)
     assert.strictEqual(key._key.constructor, Buffer)
   })
 
