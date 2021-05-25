@@ -2,22 +2,15 @@
 
 const fs = (typeof window === 'object' || typeof self === 'object') ? null : eval('require("fs")') // eslint-disable-line
 const level = require('level')
-const crypto = require('libp2p-crypto')
+const {
+  unmarshalSecp256k1PrivateKey: unmarshal
+} = require('libp2p-crypto').keys.supportedKeys.secp256k1
 const secp256k1 = require('secp256k1')
 const LRU = require('lru')
 const Buffer = require('safe-buffer/').Buffer
 const { verifier } = require('./verifiers')
 const EC = require('elliptic').ec
 var ec = new EC('secp256k1')
-
-const genPrivKey = (pk) => new Promise((resolve, reject) => {
-  crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PrivateKey(pk, (err, key) => {
-    if (!err) {
-      resolve(key)
-    }
-    reject(err)
-  })
-})
 
 function createStore (path = './keystore') {
   if (fs && fs.mkdirSync) {
@@ -83,11 +76,12 @@ class Keystore {
     }
 
     // Throws error if seed is lower than 192 bit length.
-    const keys = await genPrivKey(ec.genKeyPair({ entropy }).getPrivate().toArrayLike(Buffer))
-    const decompressedKey = secp256k1.publicKeyConvert(keys.public.marshal(), false)
+    const keys = await unmarshal(ec.genKeyPair({ entropy }).getPrivate().toArrayLike(Buffer))
+    const pubKey = keys.public.marshal()
+    const decompressedKey = secp256k1.publicKeyConvert(Buffer.from(pubKey), false)
     const key = {
       publicKey: Buffer.from(decompressedKey).toString('hex'),
-      privateKey: keys.marshal().toString('hex')
+      privateKey: Buffer.from(keys.marshal()).toString('hex')
     }
 
     try {
@@ -132,7 +126,7 @@ class Keystore {
       this._cache.set(id, deserializedKey)
     }
 
-    return genPrivKey(Buffer.from(deserializedKey.privateKey, 'hex'))
+    return unmarshal(Buffer.from(deserializedKey.privateKey, 'hex'))
   }
 
   async sign (key, data) {
@@ -148,14 +142,7 @@ class Keystore {
       data = Buffer.from(data)
     }
 
-    return new Promise((resolve, reject) => {
-      key.sign(data, (err, signature) => {
-        if (!err) {
-          resolve(signature.toString('hex'))
-        }
-        reject(err)
-      })
-    })
+    return Buffer.from(await key.sign(data)).toString('hex')
   }
 
   getPublic (keys, options = {}) {
@@ -167,8 +154,9 @@ class Keystore {
     }
     let pubKey = keys.public.marshal()
     if (decompress) {
-      pubKey = Buffer.from(secp256k1.publicKeyConvert(pubKey, false))
+      pubKey = secp256k1.publicKeyConvert(Buffer.from(pubKey), false)
     }
+    pubKey = Buffer.from(pubKey)
     return format === 'buffer' ? pubKey : pubKey.toString('hex')
   }
 

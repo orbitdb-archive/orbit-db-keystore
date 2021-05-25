@@ -1,5 +1,7 @@
 'use strict'
-const crypto = require('libp2p-crypto')
+const {
+  unmarshalSecp256k1PublicKey: unmarshal
+} = require('libp2p-crypto').keys.supportedKeys.secp256k1
 const Buffer = require('safe-buffer/').Buffer
 
 module.exports = {
@@ -18,18 +20,11 @@ module.exports = {
       data = Buffer.from(data)
     }
 
-    const isValid = (key, msg, sig) => new Promise((resolve, reject) => {
-      key.verify(msg, sig, (err, valid) => {
-        if (!err) {
-          resolve(valid)
-        }
-        reject(valid)
-      })
-    })
+    const isValid = (key, msg, sig) => key.verify(msg, sig)
 
     let res = false
     try {
-      const pubKey = crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PublicKey(Buffer.from(publicKey, 'hex'))
+      const pubKey = unmarshal(Buffer.from(publicKey, 'hex'))
       res = await isValid(pubKey, data, Buffer.from(signature, 'hex'))
     } catch (e) {
       // Catch error: sig length wrong
