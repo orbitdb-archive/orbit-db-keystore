@@ -10,6 +10,15 @@ const { verifier } = require('./verifiers')
 const EC = require('elliptic').ec
 var ec = new EC('secp256k1')
 
+const genPrivKey = (pk) => new Promise((resolve, reject) => {
+  crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PrivateKey(pk, (err, key) => {
+    if (!err) {
+      resolve(key)
+    }
+    reject(err)
+  })
+})
+
 function createStore (path = './keystore') {
   if (fs && fs.mkdirSync) {
     fs.mkdirSync(path, { recursive: true })
@@ -65,7 +74,7 @@ class Keystore {
     return hasKey
   }
 
-  async createKey (id, options = {}) {
+  async createKey (id, { entropy } = {}) {
     if (!id) {
       throw new Error('id needed to create a key')
     }
@@ -73,14 +82,12 @@ class Keystore {
       return Promise.resolve(null)
     }
 
-    // Throws error is seed is lower than 192 bit length.
-    const keys = ec.genKeyPair({
-      entropy: options.seed
-    })
-    const decompressedKey = keys.getPublic().encode('hex', true)
+    // Throws error if seed is lower than 192 bit length.
+    const keys = await genPrivKey(ec.genKeyPair({ entropy }).getPrivate().toArrayLike(Buffer))
+    const decompressedKey = secp256k1.publicKeyConvert(keys.public.marshal(), false)
     const key = {
-      publicKey: decompressedKey,
-      privateKey: keys.getPrivate().toString('hex')
+      publicKey: Buffer.from(decompressedKey).toString('hex'),
+      privateKey: keys.marshal().toString('hex')
     }
 
     try {
@@ -124,15 +131,6 @@ class Keystore {
     if (!cachedKey) {
       this._cache.set(id, deserializedKey)
     }
-
-    const genPrivKey = (pk) => new Promise((resolve, reject) => {
-      crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PrivateKey(pk, (err, key) => {
-        if (!err) {
-          resolve(key)
-        }
-        reject(err)
-      })
-    })
 
     return genPrivKey(Buffer.from(deserializedKey.privateKey, 'hex'))
   }
