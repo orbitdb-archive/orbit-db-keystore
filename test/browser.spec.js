@@ -14,7 +14,7 @@ if (!isNode) {
   const storagePath = path.join('test', 'signingKeys')
   const signingStore = levelup(level(storagePath))
 
-  let copyFixtures = []
+  const copyFixtures = []
   copyFixtures.push(signingStore.open())
 
   const signingKeys = require('./fixtures/signingKeys/signing')

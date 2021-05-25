@@ -19,14 +19,14 @@ const storagePath = path.join('test', 'signingKeys')
 
 before(async () => {
   await fs.copy(fixturePath, storagePath)
-  store = await storage.createStore(`./keystore-test`)
+  store = await storage.createStore('./keystore-test')
 })
 
 after(async () => {
   rmrf.sync(storagePath)
 })
 
-describe(`constructor`, async () => {
+describe('constructor', async () => {
   it('creates a new Keystore instance', async () => {
     const keystore = new Keystore(store)
 
@@ -80,7 +80,7 @@ describe(`constructor`, async () => {
   })
 })
 
-describe(`#createKey()`, async => {
+describe('#createKey()', async => {
   let keystore
 
   beforeEach(async () => {
@@ -287,8 +287,8 @@ describe('#getPublic', async () => {
 
   it('gets the public key - buffer', async () => {
     const expectedBuffer = {
-      'type': 'Buffer',
-      'data': [4, 1, 15, 100, 15, 126, 176, 35, 115, 73, 236, 58, 114, 2, 236, 11, 147, 120,
+      type: 'Buffer',
+      data: [4, 1, 15, 100, 15, 126, 176, 35, 115, 73, 236, 58, 114, 2, 236, 11, 147, 120,
         166, 77, 196, 145, 55, 22, 37, 172, 201, 116, 201, 84, 212, 166, 163, 117, 10, 49,
         68, 39, 56, 40, 54, 204, 7, 2, 232, 78, 172, 36, 234, 203, 16, 253, 55, 222, 234, 87,
         229, 151, 125, 98, 88, 34, 37, 237, 104]
@@ -305,9 +305,9 @@ describe('#getPublic', async () => {
 
   it('gets the public key - buffer, not decompressed', async () => {
     const expectedCompressedBuffer = {
-      'type': 'Buffer',
-      'data': [2, 1, 15, 100, 15, 126, 176, 35, 115, 73, 236, 58, 114, 2, 236, 11, 147, 120, 166, 77,
-        196, 145, 55, 22, 37, 172, 201, 116, 201, 84, 212, 166, 163] }
+      type: 'Buffer',
+      data: [2, 1, 15, 100, 15, 126, 176, 35, 115, 73, 236, 58, 114, 2, 236, 11, 147, 120, 166, 77, 196, 145, 55, 22, 37, 172, 201, 116, 201, 84, 212, 166, 163]
+    }
     const publicKey = await keystore.getPublic(key, { format: 'buffer', decompress: false })
     assert.deepStrictEqual(publicKey.toJSON(), expectedCompressedBuffer)
   })

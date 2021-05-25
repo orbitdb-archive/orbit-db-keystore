@@ -1,8 +1,8 @@
 'use strict'
 
 const verifiers = {
-  'v0': require('./verifierv0'),
-  'v1': require('./verifierv1')
+  v0: require('./verifierv0'),
+  v1: require('./verifierv1')
 }
 
 module.exports = {
