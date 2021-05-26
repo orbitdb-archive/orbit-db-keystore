@@ -2,6 +2,7 @@
 
 const fs = (typeof window === 'object' || typeof self === 'object') ? null : eval('require("fs")') // eslint-disable-line
 const level = require('level')
+const reachdown = require('reachdown')
 const {
   unmarshalSecp256k1PrivateKey: unmarshal
 } = require('libp2p-crypto').keys.supportedKeys.secp256k1
@@ -32,6 +33,7 @@ class Keystore {
       this._store = input.store || createStore()
     }
     this._cache = input.cache || new LRU(100)
+    this._upgraded = null
   }
 
   async open () {
@@ -44,15 +46,35 @@ class Keystore {
 
   async close () {
     if (!this._store) return
+    await this._upgraded
     await this._store.close()
+  }
+
+  // upgrade level-js to version 5.0.0
+  // https://github.com/Level/level-js/blob/master/UPGRADING.md#500
+  async _upgrade () {
+    const db = reachdown(this._store, 'level-js', true)
+    if (db && db.upgrade) {
+      if (this._upgraded) { return }
+      this._upgraded = new Promise((resolve, reject) => {
+        db.upgrade(function (err) {
+          if (err) reject(err)
+          resolve()
+        })
+      })
+      await this._upgraded
+    }
   }
 
   async hasKey (id) {
     if (!id) {
       throw new Error('id needed to check a key')
     }
-    if (this._store.status && this._store.status !== 'open') {
+    if (!this._store || !this._store.isOpen()) {
       return Promise.resolve(null)
+    }
+    if (!this._upgraded) {
+      await this._upgrade()
     }
 
     let hasKey = false
@@ -71,8 +93,11 @@ class Keystore {
     if (!id) {
       throw new Error('id needed to create a key')
     }
-    if (this._store.status && this._store.status !== 'open') {
+    if (!this._store || !this._store.isOpen()) {
       return Promise.resolve(null)
+    }
+    if (!this._upgraded) {
+      await this._upgrade()
     }
 
     // Throws error if seed is lower than 192 bit length.
@@ -101,8 +126,11 @@ class Keystore {
     if (!this._store) {
       await this.open()
     }
-    if (this._store.status && this._store.status !== 'open') {
+    if (!this._store.isOpen()) {
       return Promise.resolve(null)
+    }
+    if (!this._upgraded) {
+      await this._upgrade()
     }
 
     const cachedKey = this._cache.get(id)
