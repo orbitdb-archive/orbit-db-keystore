@@ -7,7 +7,7 @@ const Keystore = require('../src/keystore')
 const fs = require('fs-extra')
 const LRU = require('lru')
 
-const implementations = require('orbit-db-test-utils/implementations')
+const implementations = require('orbit-db-storage-adapter/test/implementations')
 
 const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
 const storage = require('orbit-db-storage-adapter')(properLevelModule)

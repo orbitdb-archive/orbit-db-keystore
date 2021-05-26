@@ -10,9 +10,9 @@ if (!isNode) {
   // If in browser, put the fixture keys in local storage
   // so that Keystore can find them
   const levelup = require('levelup')
-  const level = require('level-js')
+  const leveljs = require('level-js')
   const storagePath = path.join('test', 'signingKeys')
-  const signingStore = levelup(level(storagePath))
+  const signingStore = levelup(leveljs(storagePath))
 
   const copyFixtures = []
   copyFixtures.push(signingStore.open())
