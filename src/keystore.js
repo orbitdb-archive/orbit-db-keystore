@@ -82,7 +82,7 @@ class Keystore {
     if (!id) {
       throw new Error('id needed to check a key')
     }
-    if (!this._store || !this._store.isOpen()) {
+    if (this._store.status && this._store.status !== 'open') {
       return Promise.resolve(null)
     }
     if (!this._upgraded) {
@@ -105,7 +105,7 @@ class Keystore {
     if (!id) {
       throw new Error('id needed to create a key')
     }
-    if (!this._store || !this._store.isOpen()) {
+    if (this._store.status && this._store.status !== 'open') {
       return Promise.resolve(null)
     }
     if (!this._upgraded) {
@@ -138,7 +138,7 @@ class Keystore {
     if (!this._store) {
       await this.open()
     }
-    if (!this._store.isOpen()) {
+    if (this._store.status && this._store.status !== 'open') {
       return Promise.resolve(null)
     }
     if (!this._upgraded) {
