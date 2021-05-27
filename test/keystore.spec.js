@@ -6,6 +6,7 @@ const rmrf = require('rimraf')
 const Keystore = require('../src/keystore')
 const fs = require('fs-extra')
 const LRU = require('lru')
+const isNode = require('is-node')
 
 const implementations = require('orbit-db-storage-adapter/test/implementations')
 
@@ -16,6 +17,7 @@ let store
 
 const fixturePath = path.join('test', 'fixtures', 'signingKeys')
 const storagePath = path.join('test', 'signingKeys')
+const upgradePath = path.join('test', 'upgrade')
 
 before(async () => {
   await fs.copy(fixturePath, storagePath)
@@ -24,6 +26,7 @@ before(async () => {
 
 after(async () => {
   rmrf.sync(storagePath)
+  rmrf.sync(upgradePath)
 })
 
 describe('constructor', async () => {
@@ -406,3 +409,42 @@ describe('#open', async () => {
     signingStore.close()
   })
 })
+
+if (!isNode) {
+  describe('#_upgrade', async () => {
+    let keystore, upgradeStore, key
+
+    beforeEach(async () => {
+      upgradeStore = await storage.createStore(upgradePath)
+      keystore = new Keystore(upgradeStore)
+    })
+
+    afterEach(async () => {
+      await upgradeStore.close()
+    })
+
+    it('upgrades from level-js version 4', async () => {
+      const rejected = await upgradeStore.get('upgrade').catch(e => true)
+      assert.strictEqual(rejected, true)
+
+      key = await keystore.getKey('upgrade')
+      assert.strictEqual(key._publicKey.length, 33)
+      assert.strictEqual(key._key.length, 32)
+      assert.strictEqual(key._publicKey.constructor, Uint8Array)
+      assert.strictEqual(key._key.constructor, Buffer)
+
+      const resolved = await upgradeStore.get('upgrade').then(() => true)
+      assert.strictEqual(resolved, true)
+    })
+
+    it('persists store was upgraded', async () => {
+      key = await keystore.getKey('upgrade')
+      assert.strictEqual(key._publicKey.length, 33)
+      assert.strictEqual(key._key.length, 32)
+      assert.strictEqual(key._publicKey.constructor, Uint8Array)
+      assert.strictEqual(key._key.constructor, Buffer)
+
+      assert.strictEqual(keystore._upgraded, true)
+    })
+  })
+}
