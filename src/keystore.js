@@ -53,8 +53,19 @@ class Keystore {
   // upgrade level-js to version 5.0.0
   // https://github.com/Level/level-js/blob/master/UPGRADING.md#500
   async _upgrade () {
+    const upgradeKey = new Uint8Array([0])
+
+    async function isUpgraded (store) {
+      return Boolean(await store.get(upgradeKey).catch(e => false))
+    }
+
+    async function setUpgraded (store) {
+      await store.put(upgradeKey, '1')
+    }
+
     const db = reachdown(this._store, 'level-js', true)
     if (db && db.upgrade) {
+      if (await isUpgraded(this._store)) this._upgraded = true
       if (this._upgraded) { return }
       this._upgraded = new Promise((resolve, reject) => {
         db.upgrade(function (err) {
@@ -63,6 +74,7 @@ class Keystore {
         })
       })
       await this._upgraded
+      await setUpgraded(this._store)
     }
   }
 
