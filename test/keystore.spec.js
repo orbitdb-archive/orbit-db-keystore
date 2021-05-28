@@ -411,7 +411,7 @@ describe('#open', async () => {
 })
 
 if (!isNode) {
-  describe('#_upgrade', async () => {
+  describe('level-js version 5 upgrade', async () => {
     let keystore, upgradeStore, key
 
     beforeEach(async () => {
@@ -423,28 +423,15 @@ if (!isNode) {
       await upgradeStore.close()
     })
 
-    it('upgrades from level-js version 4', async () => {
-      const rejected = await upgradeStore.get('upgrade').catch(e => true)
-      assert.strictEqual(rejected, true)
-
-      key = await keystore.getKey('upgrade')
-      assert.strictEqual(key._publicKey.length, 33)
-      assert.strictEqual(key._key.length, 32)
-      assert.strictEqual(key._publicKey.constructor, Uint8Array)
-      assert.strictEqual(key._key.constructor, Buffer)
-
+    it('upgraded from level-js version 4', async () => {
       const resolved = await upgradeStore.get('upgrade').then(() => true)
       assert.strictEqual(resolved, true)
-    })
 
-    it('persists store was upgraded', async () => {
       key = await keystore.getKey('upgrade')
       assert.strictEqual(key._publicKey.length, 33)
       assert.strictEqual(key._key.length, 32)
       assert.strictEqual(key._publicKey.constructor, Uint8Array)
       assert.strictEqual(key._key.constructor, Buffer)
-
-      assert.strictEqual(keystore._upgraded, true)
     })
   })
 }
