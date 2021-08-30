@@ -9,6 +9,10 @@
     "keystore",
     "kv-store"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orbitdb/orbit-db-keystore.git",
+  },
   "scripts": {
     "test": "npm run test:node && npm run test:browser",
     "test:node": "cross-env TEST=all mocha",
