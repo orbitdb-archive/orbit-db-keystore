@@ -13,43 +13,49 @@ module.exports = {
   target: 'web',
   mode: 'production',
   devtool: 'source-map',
-  node: {
-    child_process: 'empty'
-  },
   plugins: [
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify(process.env.NODE_ENV)
       }
     }),
-    new webpack.IgnorePlugin(/mongo|redis/)
+    new webpack.IgnorePlugin({
+      resourceRegExp: /mongo|redis/,
+      contextRegExp: /mongo|redis/
+    }),
+    new webpack.ProvidePlugin({
+      process: 'process/browser',
+      Buffer: ['buffer', 'Buffer']
+    })
   ],
   externals: {
     fs: '{}',
     fatfs: '{}',
     runtimejs: '{}',
-    // net: '{}',
-    // tls: '{}',
     rimraf: '{ sync: () => {} }',
     'graceful-fs': '{}',
     'fs-extra': '{ copy: () => {} }',
     'fs.realpath': '{}'
-    // 'child_process': {},
-    // dns: '{}',
-    // "node-gyp-build": '{}'
   },
   resolve: {
     modules: [
       'node_modules',
       path.resolve(__dirname, '../node_modules')
-    ]
+    ],
+    fallback: {
+      assert: require.resolve('assert'),
+      buffer: require.resolve('buffer'),
+      path: require.resolve('path-browserify'),
+      os: false
+    }
   },
   resolveLoader: {
     modules: [
       'node_modules',
       path.resolve(__dirname, '../node_modules')
     ],
-    moduleExtensions: ['-loader']
+    extensions: ['.js', '.json'],
+    mainFields: ['loader', 'main']
   },
   module: {
     rules: [

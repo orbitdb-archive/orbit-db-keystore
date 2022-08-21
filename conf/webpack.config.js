@@ -11,11 +11,7 @@ module.exports = {
   },
   target: 'web',
   mode: 'production',
-  devtool: 'sourcemap',
-  node: {
-    console: false,
-    Buffer: true
-  },
+  devtool: 'source-map',
   plugins: [
   ],
   resolve: {
@@ -29,6 +25,7 @@ module.exports = {
       'node_modules',
       path.resolve(__dirname, '../node_modules')
     ],
-    moduleExtensions: ['-loader']
+    extensions: ['.js', '.json'],
+    mainFields: ['loader', 'main']
   }
 }
