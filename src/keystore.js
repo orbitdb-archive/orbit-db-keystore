@@ -37,16 +37,15 @@ class Keystore {
   }
 
   async open () {
-    if (this._store) {
-      await this._store.open()
-      return Promise.resolve()
+    if (!this._store) {
+      throw new Error('Keystore: No store found to open')
     }
-    return Promise.reject(new Error('Keystore: No store found to open'))
+    await this._store.open()
   }
 
   async close () {
     if (!this._store) return
-    await this._upgraded
+    await this._upgrade()
     await this._store.close()
   }
 
@@ -83,7 +82,7 @@ class Keystore {
       throw new Error('id needed to check a key')
     }
     if (this._store.status && this._store.status !== 'open') {
-      return Promise.resolve(null)
+      return null
     }
     if (!this._upgraded) {
       await this._upgrade()
@@ -106,7 +105,7 @@ class Keystore {
       throw new Error('id needed to create a key')
     }
     if (this._store.status && this._store.status !== 'open') {
-      return Promise.resolve(null)
+      return null
     }
     if (!this._upgraded) {
       await this._upgrade()
@@ -139,7 +138,7 @@ class Keystore {
       await this.open()
     }
     if (this._store.status && this._store.status !== 'open') {
-      return Promise.resolve(null)
+      return null
     }
     if (!this._upgraded) {
       await this._upgrade()
