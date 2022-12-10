@@ -2,6 +2,7 @@
   "name": "orbit-db-keystore",
   "version": "1.0.0",
   "description": "A local key manager for OrbitDB",
+  "type": "module",
   "main": "src/keystore.js",
   "keywords": [
     "orbitdb",
@@ -20,14 +21,15 @@
     "build": "npm run build:dist",
     "build:dist": "webpack --config ./conf/webpack.config.js --mode production",
     "build:tests": "webpack --config ./conf/webpack.tests.config.js --mode production",
-    "lint": "standard"
+    "lint": "standard",
+    "lint:fix": "standard --fix"
   },
   "author": "Haad",
   "license": "MIT",
   "dependencies": {
+    "@libp2p/crypto": "^0.22.14",
     "elliptic": "^6.5.4",
     "level": "~7.0.0",
-    "libp2p-crypto": "^0.21.2",
     "lru": "^3.1.0",
     "mkdirp": "^0.5.5",
     "reachdown": "^1.1.0",
@@ -45,6 +47,7 @@
     "babel-loader": "~8.0.4",
     "cross-env": "^7.0.2",
     "fs-extra": "^10.1.0",
+    "graceful-fs": "^4.2.10",
     "is-node": "^1.0.2",
     "json-loader": "~0.5.7",
     "level-js": "^6.0.0",
@@ -54,7 +57,7 @@
     "memdown": "^6.0.0",
     "mocha": "^10.0.0",
     "mocha-headless-chrome": "^4.0.0",
-    "orbit-db-storage-adapter": "^0.7.0",
+    "orbit-db-storage-adapter": "file:../orbit-db-storage-adapter",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "standard": "^17.0.0",

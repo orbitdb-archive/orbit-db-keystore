@@ -1,25 +1,23 @@
-'use strict'
+import assert from 'assert'
+import path from 'path'
+import rmrf from 'rimraf'
+import Keystore from '../src/keystore.js'
+import fs from 'fs-extra'
+import LRU from 'lru'
+import isNode from 'is-node'
+import storageAdapter from 'orbit-db-storage-adapter'
 
-var assert = require('assert')
-const path = require('path')
-const rmrf = require('rimraf')
-const Keystore = require('../src/keystore')
-const fs = require('fs-extra')
-const LRU = require('lru')
-const isNode = require('is-node')
-
-const implementations = require('orbit-db-storage-adapter/test/implementations')
-
-const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
-const storage = require('orbit-db-storage-adapter')(properLevelModule)
-
-let store
-
-const fixturePath = path.join('test', 'fixtures', 'signingKeys')
-const storagePath = path.join('test', 'signingKeys')
-const upgradePath = path.join('test', 'upgrade')
+let storage, store
+let fixturePath, storagePath, upgradePath
 
 before(async () => {
+  const implementations = await (await import('orbit-db-storage-adapter/test/implementations/index.js')).default
+  const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
+  storage = storageAdapter(properLevelModule)
+  fixturePath = path.join('test', 'fixtures', 'signingKeys')
+  storagePath = path.join('test', 'signingKeys')
+  upgradePath = path.join('test', 'upgrade')
+
   await fs.copy(fixturePath, storagePath)
   store = await storage.createStore('./keystore-test')
 })
@@ -29,8 +27,9 @@ after(async () => {
   rmrf.sync(upgradePath)
 })
 
-describe('constructor', async () => {
+describe('constructor', () => {
   it('creates a new Keystore instance', async () => {
+    console.log('creates a new Keystore instance')
     const keystore = new Keystore(store)
 
     assert.strictEqual(typeof keystore.close, 'function')
@@ -238,7 +237,7 @@ describe('#getKey()', async () => {
   })
 })
 
-describe('#sign()', async () => {
+describe('#sign()', () => {
   let keystore, key, signingStore
 
   before(async () => {
@@ -385,11 +384,11 @@ describe('#open', async () => {
   beforeEach(async () => {
     signingStore = await storage.createStore(storagePath)
     keystore = new Keystore(signingStore)
-    signingStore.close()
+    await signingStore.close()
   })
 
   it('closes then open', async () => {
-    assert.strictEqual(signingStore.db.status, 'new')
+    assert.strictEqual(signingStore.db.status, 'closed')
     await keystore.open()
     assert.strictEqual(signingStore.db.status, 'open')
   })

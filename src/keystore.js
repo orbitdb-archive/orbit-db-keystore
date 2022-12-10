@@ -1,27 +1,23 @@
-'use strict'
+import level from 'level'
+import reachdown from 'reachdown'
+import * as crypto from '@libp2p/crypto'
+import secp256k1 from 'secp256k1'
+import LRU from 'lru'
+import { Buffer } from 'safe-buffer'
+import { verifier } from './verifiers/index.js'
+import pkg from 'elliptic'
+const { ec: EC } = pkg
 
-const fs = (typeof window === 'object' || typeof self === 'object') ? null : eval('require("fs")') // eslint-disable-line
-const level = require('level')
-const reachdown = require('reachdown')
-const {
-  unmarshalSecp256k1PrivateKey: unmarshal
-} = require('libp2p-crypto').keys.supportedKeys.secp256k1
-const secp256k1 = require('secp256k1')
-const LRU = require('lru')
-const Buffer = require('safe-buffer/').Buffer
-const { verifier } = require('./verifiers')
-const EC = require('elliptic').ec
-var ec = new EC('secp256k1')
+const ec = new EC('secp256k1')
+const unmarshal = crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PrivateKey
 
 function createStore (path = './keystore') {
-  if (fs && fs.mkdirSync) {
-    fs.mkdirSync(path, { recursive: true })
-  }
   return level(path)
 }
+
 const verifiedCache = new LRU(1000)
 
-class Keystore {
+export default class Keystore {
   constructor (input = {}) {
     if (typeof input === 'string') {
       this._store = createStore(input)
@@ -227,5 +223,3 @@ class Keystore {
     return res
   }
 }
-
-module.exports = Keystore
