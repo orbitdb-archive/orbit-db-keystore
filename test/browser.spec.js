@@ -7,9 +7,9 @@ import getPublicKeys from './fixtures/signingKeys/getPublic.json' assert { type:
 // tests bundle and the code here gets run when imported
 // into the browser tests index through browser/run.js
 if (!isNode) {
-  const levelup = await (await import('levelup')).default
-  const leveljs = await (await import('level-js')).default
-  const leveljs4 = await (await import('level-js4')).default
+  const levelup = (await import('levelup')).default
+  const leveljs = (await import('level-js')).default
+  const leveljs4 = (await import('level-js4')).default
 
   // If in browser, put the fixture keys in local storage
   // so that Keystore can find them
