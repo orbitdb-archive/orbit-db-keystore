@@ -1,5 +1,5 @@
 import pkg from 'elliptic'
-const { ec } = pkg
+const { ec: EC } = pkg
 
 export const verify = async (signature, publicKey, data) => {
   if (!signature) {
@@ -12,6 +12,7 @@ export const verify = async (signature, publicKey, data) => {
     throw new Error('Given input data was undefined')
   }
   let res = false
+  const ec = new EC('secp256k1')
   const key = ec.keyPair({
     pub: publicKey,
     pubEnc: 'hex'
