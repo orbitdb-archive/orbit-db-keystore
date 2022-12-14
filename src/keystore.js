@@ -5,6 +5,7 @@ import secp256k1 from 'secp256k1'
 import LRU from 'lru'
 import { Buffer } from 'safe-buffer'
 import { verifier } from './verifiers/index.js'
+import fs from 'fs'
 import pkg from 'elliptic'
 const { ec: EC } = pkg
 
@@ -12,6 +13,10 @@ const ec = new EC('secp256k1')
 const unmarshal = crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PrivateKey
 
 function createStore (path = './keystore') {
+  if (fs && fs.mkdirSync) {
+    fs.mkdirSync(path, { recursive: true })
+  }
+
   return level(path)
 }
 
