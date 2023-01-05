@@ -113,7 +113,11 @@ export default class Keystore {
     }
 
     // Throws error if seed is lower than 192 bit length.
-    const keys = await unmarshal(ec.genKeyPair({ entropy }).getPrivate().toArrayLike(Buffer))
+    const privKey = ec.genKeyPair({ entropy }).getPrivate().toArrayLike(Buffer)
+    const buf = Buffer.alloc(32)
+    privKey.copy(buf, buf.length - privKey.length)
+
+    const keys = await unmarshal(privKey)
     const pubKey = keys.public.marshal()
     const decompressedKey = secp256k1.publicKeyConvert(Buffer.from(pubKey), false)
     const key = {
