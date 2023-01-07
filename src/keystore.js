@@ -112,12 +112,17 @@ export default class Keystore {
       await this._upgrade()
     }
 
-    // Throws error if seed is lower than 192 bit length.
+    // Generate a private key
     const privKey = ec.genKeyPair({ entropy }).getPrivate().toArrayLike(Buffer)
+    // Left pad the key to 32 bytes. The module used in libp2p crypto (noble-secp256k1)
+    // verifies the length and will throw an error if key is not 32 bytes.
+    // For more details on why the generated key is not always 32 bytes, see:
+    // https://stackoverflow.com/questions/62938091/why-are-secp256k1-privatekeys-not-always-32-bytes-in-nodejs
     const buf = Buffer.alloc(32)
+    // Copy the private key buffer to the padded buffer
     privKey.copy(buf, buf.length - privKey.length)
 
-    const keys = await unmarshal(privKey)
+    const keys = await unmarshal(buf)
     const pubKey = keys.public.marshal()
     const decompressedKey = secp256k1.publicKeyConvert(Buffer.from(pubKey), false)
     const key = {
