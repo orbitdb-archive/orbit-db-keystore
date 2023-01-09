@@ -1,12 +1,13 @@
 import path from 'path'
 import isNode from 'is-node'
-import signingKeys from './fixtures/signingKeys/signing.json' assert { type: 'json' }
-import getPublicKeys from './fixtures/signingKeys/getPublic.json' assert { type: 'json' }
 
 // This file will be picked up by webpack into the
 // tests bundle and the code here gets run when imported
 // into the browser tests index through browser/run.js
 if (!isNode) {
+  const { default: signingKeys } = await import('./fixtures/signingKeys/signing.json')
+  const { default: getPublicKeys } = await import('./fixtures/signingKeys/getPublic.json')
+
   const levelup = (await import('levelup')).default
   const leveljs = (await import('level-js')).default
   const leveljs4 = (await import('level-js4')).default

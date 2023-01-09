@@ -1,4 +1,4 @@
-import level from 'level'
+import { Level } from 'level'
 import reachdown from 'reachdown'
 import * as crypto from '@libp2p/crypto'
 import secp256k1 from 'secp256k1'
@@ -17,7 +17,7 @@ function createStore (path = './keystore') {
     fs.mkdirSync(path, { recursive: true })
   }
 
-  return level(path)
+  return new Level(path, {})
 }
 
 const verifiedCache = new LRU(1000)

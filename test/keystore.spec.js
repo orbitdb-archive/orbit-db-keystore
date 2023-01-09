@@ -11,7 +11,7 @@ let storage, store
 let fixturePath, storagePath, upgradePath
 
 before(async () => {
-  const implementations = await (await import('orbit-db-storage-adapter/test/implementations/index.js')).default
+  const implementations = await (await import('orbit-db-storage-adapter/test/implementations/index.js')).default()
   const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
   storage = storageAdapter(properLevelModule)
   fixturePath = path.join('test', 'fixtures', 'signingKeys')
@@ -45,7 +45,7 @@ describe('constructor', () => {
   it('assigns this._store', async () => {
     const keystore = new Keystore(store)
     // Loose check for leveldownishness
-    assert.strictEqual(keystore._store._db.status, 'open')
+    assert.strictEqual(keystore._store.status, 'open')
   })
 
   it('assigns this.cache with default of 100', async () => {
@@ -55,20 +55,20 @@ describe('constructor', () => {
 
   it('creates a proper leveldown / level-js store if not passed a store', async () => {
     const keystore = new Keystore()
-    assert.strictEqual(keystore._store._db.status, 'opening')
+    assert.strictEqual(keystore._store.status, 'opening')
     await keystore.close()
   })
 
   it('creates a keystore with empty options', async () => {
     const keystore = new Keystore({})
-    assert.strictEqual(keystore._store._db.status, 'opening')
+    assert.strictEqual(keystore._store.status, 'opening')
     await keystore.close()
   })
 
   it('creates a keystore with only cache', async () => {
     const cache = new LRU(10)
     const keystore = new Keystore({ cache })
-    assert.strictEqual(keystore._store._db.status, 'opening')
+    assert.strictEqual(keystore._store.status, 'opening')
     assert(keystore._cache === cache)
     await keystore.close()
   })
@@ -76,7 +76,7 @@ describe('constructor', () => {
   it('creates a keystore with both', async () => {
     const cache = new LRU(10)
     const keystore = new Keystore({ store, cache })
-    assert.strictEqual(keystore._store._db.status, 'open')
+    assert.strictEqual(keystore._store.status, 'open')
     assert(keystore._cache === cache)
     assert(keystore._store === store)
   })
@@ -87,7 +87,7 @@ describe('#createKey()', async => {
 
   beforeEach(async () => {
     keystore = new Keystore(store)
-    if (store.db.status !== 'open') {
+    if (store.status !== 'open') {
       await store.open()
     }
   })
@@ -144,7 +144,7 @@ describe('#hasKey()', async () => {
   let keystore
 
   before(async () => {
-    if (store.db.status !== 'open') {
+    if (store.status !== 'open') {
       await store.open()
     }
     keystore = new Keystore(store)
@@ -191,7 +191,7 @@ describe('#getKey()', async () => {
   let keystore
 
   before(async () => {
-    if (store.db.status !== 'open') {
+    if (store.status !== 'open') {
       await store.open()
     }
     keystore = new Keystore(store)
@@ -388,9 +388,9 @@ describe('#open', async () => {
   })
 
   it('closes then open', async () => {
-    assert.strictEqual(signingStore.db.status, 'closed')
+    assert.strictEqual(signingStore.status, 'closed')
     await keystore.open()
-    assert.strictEqual(signingStore.db.status, 'open')
+    assert.strictEqual(signingStore.status, 'open')
   })
 
   it('fails when no store', async () => {
