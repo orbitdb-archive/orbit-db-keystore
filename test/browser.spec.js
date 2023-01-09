@@ -10,7 +10,6 @@ if (!isNode) {
 
   const levelup = (await import('levelup')).default
   const leveljs = (await import('level-js')).default
-  const leveljs4 = (await import('level-js4')).default
 
   // If in browser, put the fixture keys in local storage
   // so that Keystore can find them
@@ -18,14 +17,11 @@ if (!isNode) {
   const upgradePath = path.join('test', 'upgrade')
 
   const signingStore = levelup(leveljs(storagePath))
-  const upgradeStore = levelup(leveljs4(upgradePath))
   const copyFixtures = []
   copyFixtures.push(signingStore.open())
-  copyFixtures.push(upgradeStore.open())
 
   copyFixtures.push(signingStore.put('signing', JSON.stringify(signingKeys)))
   copyFixtures.push(signingStore.put('getPublic', JSON.stringify(getPublicKeys)))
-  copyFixtures.push(upgradeStore.put('upgrade', JSON.stringify(getPublicKeys)))
 
   Promise.all(copyFixtures)
 }

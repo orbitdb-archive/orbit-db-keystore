@@ -8,7 +8,7 @@ import isNode from 'is-node'
 import storageAdapter from 'orbit-db-storage-adapter'
 
 let storage, store
-let fixturePath, storagePath, upgradePath
+let fixturePath, storagePath
 
 before(async () => {
   const implementations = await (await import('orbit-db-storage-adapter/test/implementations/index.js')).default()
@@ -16,7 +16,6 @@ before(async () => {
   storage = storageAdapter(properLevelModule)
   fixturePath = path.join('test', 'fixtures', 'signingKeys')
   storagePath = path.join('test', 'signingKeys')
-  upgradePath = path.join('test', 'upgrade')
 
   await fs.copy(fixturePath, storagePath)
   store = await storage.createStore('./keystore-test')
@@ -24,7 +23,6 @@ before(async () => {
 
 after(async () => {
   rmrf.sync(storagePath)
-  rmrf.sync(upgradePath)
 })
 
 describe('constructor', () => {
@@ -408,42 +406,3 @@ describe('#open', async () => {
     signingStore.close()
   })
 })
-
-if (!isNode) {
-  describe('#_upgrade', async () => {
-    let keystore, upgradeStore, key
-
-    beforeEach(async () => {
-      upgradeStore = await storage.createStore(upgradePath)
-      keystore = new Keystore(upgradeStore)
-    })
-
-    afterEach(async () => {
-      await upgradeStore.close()
-    })
-
-    it('upgrades from level-js version 4', async () => {
-      const rejected = await upgradeStore.get('upgrade').catch(e => true)
-      assert.strictEqual(rejected, true)
-
-      key = await keystore.getKey('upgrade')
-      assert.strictEqual(key._publicKey.length, 33)
-      assert.strictEqual(key._key.length, 32)
-      assert.strictEqual(key._publicKey.constructor, Uint8Array)
-      assert.strictEqual(key._key.constructor, Buffer)
-
-      const resolved = await upgradeStore.get('upgrade').then(() => true)
-      assert.strictEqual(resolved, true)
-    })
-
-    it('persists store was upgraded', async () => {
-      key = await keystore.getKey('upgrade')
-      assert.strictEqual(key._publicKey.length, 33)
-      assert.strictEqual(key._key.length, 32)
-      assert.strictEqual(key._publicKey.constructor, Uint8Array)
-      assert.strictEqual(key._key.constructor, Buffer)
-
-      assert.strictEqual(keystore._upgraded, true)
-    })
-  })
-}
