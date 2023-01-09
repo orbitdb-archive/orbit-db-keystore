@@ -4,7 +4,6 @@ import rmrf from 'rimraf'
 import Keystore from '../src/keystore.js'
 import fs from 'fs-extra'
 import LRU from 'lru'
-import isNode from 'is-node'
 import storageAdapter from 'orbit-db-storage-adapter'
 
 let storage, store
