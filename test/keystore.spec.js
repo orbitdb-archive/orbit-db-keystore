@@ -1,36 +1,32 @@
-'use strict'
+import assert from 'assert'
+import path from 'path'
+import rmrf from 'rimraf'
+import Keystore from '../src/keystore.js'
+import fs from 'fs-extra'
+import LRU from 'lru'
+import storageAdapter from 'orbit-db-storage-adapter'
 
-var assert = require('assert')
-const path = require('path')
-const rmrf = require('rimraf')
-const Keystore = require('../src/keystore')
-const fs = require('fs-extra')
-const LRU = require('lru')
-const isNode = require('is-node')
-
-const implementations = require('orbit-db-storage-adapter/test/implementations')
-
-const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
-const storage = require('orbit-db-storage-adapter')(properLevelModule)
-
-let store
-
-const fixturePath = path.join('test', 'fixtures', 'signingKeys')
-const storagePath = path.join('test', 'signingKeys')
-const upgradePath = path.join('test', 'upgrade')
+let storage, store
+let fixturePath, storagePath
 
 before(async () => {
+  const implementations = await (await import('orbit-db-storage-adapter/test/implementations/index.js')).default()
+  const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
+  storage = storageAdapter(properLevelModule)
+  fixturePath = path.join('test', 'fixtures', 'signingKeys')
+  storagePath = path.join('test', 'signingKeys')
+
   await fs.copy(fixturePath, storagePath)
   store = await storage.createStore('./keystore-test')
 })
 
 after(async () => {
   rmrf.sync(storagePath)
-  rmrf.sync(upgradePath)
 })
 
-describe('constructor', async () => {
+describe('constructor', () => {
   it('creates a new Keystore instance', async () => {
+    console.log('creates a new Keystore instance')
     const keystore = new Keystore(store)
 
     assert.strictEqual(typeof keystore.close, 'function')
@@ -46,7 +42,7 @@ describe('constructor', async () => {
   it('assigns this._store', async () => {
     const keystore = new Keystore(store)
     // Loose check for leveldownishness
-    assert.strictEqual(keystore._store._db.status, 'open')
+    assert.strictEqual(keystore._store.status, 'open')
   })
 
   it('assigns this.cache with default of 100', async () => {
@@ -56,20 +52,20 @@ describe('constructor', async () => {
 
   it('creates a proper leveldown / level-js store if not passed a store', async () => {
     const keystore = new Keystore()
-    assert.strictEqual(keystore._store._db.status, 'opening')
+    assert.strictEqual(keystore._store.status, 'opening')
     await keystore.close()
   })
 
   it('creates a keystore with empty options', async () => {
     const keystore = new Keystore({})
-    assert.strictEqual(keystore._store._db.status, 'opening')
+    assert.strictEqual(keystore._store.status, 'opening')
     await keystore.close()
   })
 
   it('creates a keystore with only cache', async () => {
     const cache = new LRU(10)
     const keystore = new Keystore({ cache })
-    assert.strictEqual(keystore._store._db.status, 'opening')
+    assert.strictEqual(keystore._store.status, 'opening')
     assert(keystore._cache === cache)
     await keystore.close()
   })
@@ -77,7 +73,7 @@ describe('constructor', async () => {
   it('creates a keystore with both', async () => {
     const cache = new LRU(10)
     const keystore = new Keystore({ store, cache })
-    assert.strictEqual(keystore._store._db.status, 'open')
+    assert.strictEqual(keystore._store.status, 'open')
     assert(keystore._cache === cache)
     assert(keystore._store === store)
   })
@@ -88,7 +84,7 @@ describe('#createKey()', async => {
 
   beforeEach(async () => {
     keystore = new Keystore(store)
-    if (store.db.status !== 'open') {
+    if (store.status !== 'open') {
       await store.open()
     }
   })
@@ -145,7 +141,7 @@ describe('#hasKey()', async () => {
   let keystore
 
   before(async () => {
-    if (store.db.status !== 'open') {
+    if (store.status !== 'open') {
       await store.open()
     }
     keystore = new Keystore(store)
@@ -192,7 +188,7 @@ describe('#getKey()', async () => {
   let keystore
 
   before(async () => {
-    if (store.db.status !== 'open') {
+    if (store.status !== 'open') {
       await store.open()
     }
     keystore = new Keystore(store)
@@ -238,7 +234,7 @@ describe('#getKey()', async () => {
   })
 })
 
-describe('#sign()', async () => {
+describe('#sign()', () => {
   let keystore, key, signingStore
 
   before(async () => {
@@ -385,13 +381,13 @@ describe('#open', async () => {
   beforeEach(async () => {
     signingStore = await storage.createStore(storagePath)
     keystore = new Keystore(signingStore)
-    signingStore.close()
+    await signingStore.close()
   })
 
   it('closes then open', async () => {
-    assert.strictEqual(signingStore.db.status, 'new')
+    assert.strictEqual(signingStore.status, 'closed')
     await keystore.open()
-    assert.strictEqual(signingStore.db.status, 'open')
+    assert.strictEqual(signingStore.status, 'open')
   })
 
   it('fails when no store', async () => {
@@ -409,42 +405,3 @@ describe('#open', async () => {
     signingStore.close()
   })
 })
-
-if (!isNode) {
-  describe('#_upgrade', async () => {
-    let keystore, upgradeStore, key
-
-    beforeEach(async () => {
-      upgradeStore = await storage.createStore(upgradePath)
-      keystore = new Keystore(upgradeStore)
-    })
-
-    afterEach(async () => {
-      await upgradeStore.close()
-    })
-
-    it('upgrades from level-js version 4', async () => {
-      const rejected = await upgradeStore.get('upgrade').catch(e => true)
-      assert.strictEqual(rejected, true)
-
-      key = await keystore.getKey('upgrade')
-      assert.strictEqual(key._publicKey.length, 33)
-      assert.strictEqual(key._key.length, 32)
-      assert.strictEqual(key._publicKey.constructor, Uint8Array)
-      assert.strictEqual(key._key.constructor, Buffer)
-
-      const resolved = await upgradeStore.get('upgrade').then(() => true)
-      assert.strictEqual(resolved, true)
-    })
-
-    it('persists store was upgraded', async () => {
-      key = await keystore.getKey('upgrade')
-      assert.strictEqual(key._publicKey.length, 33)
-      assert.strictEqual(key._key.length, 32)
-      assert.strictEqual(key._publicKey.constructor, Uint8Array)
-      assert.strictEqual(key._key.constructor, Buffer)
-
-      assert.strictEqual(keystore._upgraded, true)
-    })
-  })
-}

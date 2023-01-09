@@ -1,27 +1,27 @@
-'use strict'
+import { Level } from 'level'
+import * as crypto from '@libp2p/crypto'
+import secp256k1 from 'secp256k1'
+import LRU from 'lru'
+import { Buffer } from 'safe-buffer'
+import { verifier } from './verifiers/index.js'
+import fs from 'fs'
+import pkg from 'elliptic'
+const { ec: EC } = pkg
 
-const fs = (typeof window === 'object' || typeof self === 'object') ? null : eval('require("fs")') // eslint-disable-line
-const level = require('level')
-const reachdown = require('reachdown')
-const {
-  unmarshalSecp256k1PrivateKey: unmarshal
-} = require('libp2p-crypto').keys.supportedKeys.secp256k1
-const secp256k1 = require('secp256k1')
-const LRU = require('lru')
-const Buffer = require('safe-buffer/').Buffer
-const { verifier } = require('./verifiers')
-const EC = require('elliptic').ec
-var ec = new EC('secp256k1')
+const ec = new EC('secp256k1')
+const unmarshal = crypto.keys.supportedKeys.secp256k1.unmarshalSecp256k1PrivateKey
 
 function createStore (path = './keystore') {
   if (fs && fs.mkdirSync) {
     fs.mkdirSync(path, { recursive: true })
   }
-  return level(path)
+
+  return new Level(path, {})
 }
+
 const verifiedCache = new LRU(1000)
 
-class Keystore {
+export default class Keystore {
   constructor (input = {}) {
     if (typeof input === 'string') {
       this._store = createStore(input)
@@ -33,7 +33,6 @@ class Keystore {
       this._store = input.store || createStore()
     }
     this._cache = input.cache || new LRU(100)
-    this._upgraded = null
   }
 
   async open () {
@@ -45,36 +44,7 @@ class Keystore {
 
   async close () {
     if (!this._store) return
-    await this._upgrade()
     await this._store.close()
-  }
-
-  // upgrade level-js to version 5.0.0
-  // https://github.com/Level/level-js/blob/master/UPGRADING.md#500
-  async _upgrade () {
-    const upgradeKey = new Uint8Array([0])
-
-    async function isUpgraded (store) {
-      return Boolean(await store.get(upgradeKey).catch(e => false))
-    }
-
-    async function setUpgraded (store) {
-      await store.put(upgradeKey, '1')
-    }
-
-    const db = reachdown(this._store, 'level-js', true)
-    if (db && db.upgrade) {
-      if (await isUpgraded(this._store)) this._upgraded = true
-      if (this._upgraded) { return }
-      this._upgraded = new Promise((resolve, reject) => {
-        db.upgrade(function (err) {
-          if (err) reject(err)
-          resolve()
-        })
-      })
-      await this._upgraded
-      await setUpgraded(this._store)
-    }
   }
 
   async hasKey (id) {
@@ -83,9 +53,6 @@ class Keystore {
     }
     if (this._store.status && this._store.status !== 'open') {
       return null
-    }
-    if (!this._upgraded) {
-      await this._upgrade()
     }
 
     let hasKey = false
@@ -107,12 +74,18 @@ class Keystore {
     if (this._store.status && this._store.status !== 'open') {
       return null
     }
-    if (!this._upgraded) {
-      await this._upgrade()
-    }
 
-    // Throws error if seed is lower than 192 bit length.
-    const keys = await unmarshal(ec.genKeyPair({ entropy }).getPrivate().toArrayLike(Buffer))
+    // Generate a private key
+    const privKey = ec.genKeyPair({ entropy }).getPrivate().toArrayLike(Buffer)
+    // Left pad the key to 32 bytes. The module used in libp2p crypto (noble-secp256k1)
+    // verifies the length and will throw an error if key is not 32 bytes.
+    // For more details on why the generated key is not always 32 bytes, see:
+    // https://stackoverflow.com/questions/62938091/why-are-secp256k1-privatekeys-not-always-32-bytes-in-nodejs
+    const buf = Buffer.alloc(32)
+    // Copy the private key buffer to the padded buffer
+    privKey.copy(buf, buf.length - privKey.length)
+
+    const keys = await unmarshal(buf)
     const pubKey = keys.public.marshal()
     const decompressedKey = secp256k1.publicKeyConvert(Buffer.from(pubKey), false)
     const key = {
@@ -139,9 +112,6 @@ class Keystore {
     }
     if (this._store.status && this._store.status !== 'open') {
       return null
-    }
-    if (!this._upgraded) {
-      await this._upgrade()
     }
 
     const cachedKey = this._cache.get(id)
@@ -227,5 +197,3 @@ class Keystore {
     return res
   }
 }
-
-module.exports = Keystore

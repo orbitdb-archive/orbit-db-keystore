@@ -1,7 +1,6 @@
 node_modules/
 keystore/
 keystore-test/
-test/browser/bundle.js
-test/browser/bundle.js.map
+test/browser/*bundle.js*
 examples/browser/orbit-db-keystore.min.js*
 dist/*.js.map
