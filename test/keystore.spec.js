@@ -10,9 +10,7 @@ let storage, store
 let fixturePath, storagePath
 
 before(async () => {
-  const implementations = await (await import('orbit-db-storage-adapter/test/implementations/index.js')).default()
-  const properLevelModule = implementations.filter(i => i.key.indexOf('level') > -1).map(i => i.module)[0]
-  storage = storageAdapter(properLevelModule)
+  storage = storageAdapter()
   fixturePath = path.join('test', 'fixtures', 'signingKeys')
   storagePath = path.join('test', 'signingKeys')
 
