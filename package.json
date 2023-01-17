@@ -31,7 +31,7 @@
     "elliptic": "^6.5.4",
     "level": "^8.0.0",
     "lru": "^3.1.0",
-    "mkdirp": "^2.0.0",
+    "mkdirp": "^2.1.1",
     "safe-buffer": "^5.2.1",
     "secp256k1": "^5.0.0"
   },
@@ -48,7 +48,7 @@
     "json-loader": "~0.5.7",
     "mocha": "^10.2.0",
     "mocha-headless-chrome": "^4.0.0",
-    "orbit-db-storage-adapter": "github:orbitdb/orbit-db-storage-adapter#dev/simplify-level",
+    "orbit-db-storage-adapter": "next",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "standard": "^17.0.0",
